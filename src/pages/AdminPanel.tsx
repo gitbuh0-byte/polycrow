@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { collection, query, limit, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
 
-export default function AdminPanel() {
+export default function AdminPanel({ onExit }: { onExit: () => void }) {
   const { t } = useTranslation();
   const [agreements, setAgreements] = useState<any[]>([]);
 
@@ -13,14 +13,24 @@ export default function AdminPanel() {
     const q = query(collection(db, "agreements"), limit(10));
     return onSnapshot(q, (snapshot) => {
       setAgreements(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      console.error("Admin Panel Agreements error:", error);
     });
   }, []);
 
   return (
     <div className="flex flex-col gap-10">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-4xl font-display font-bold">Admin Command</h2>
-        <p className="text-white/40">Real-time platform oversight and escrow intervention console.</p>
+      <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2">
+          <h2 className="text-4xl font-display font-bold">Admin Command</h2>
+          <p className="text-white/40">Real-time platform oversight and escrow intervention console.</p>
+        </div>
+        <button 
+          onClick={onExit}
+          className="px-6 py-3 bg-red-500/10 text-red-500 border border-red-500/20 rounded-2xl font-bold uppercase tracking-widest text-[10px] hover:bg-red-500/20 transition-all"
+        >
+          Exit Secure Terminal
+        </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

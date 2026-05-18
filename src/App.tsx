@@ -5,6 +5,7 @@ import {
   ShieldCheck, 
   MessageSquare, 
   User as UserIcon,
+  Wallet as WalletIcon,
   Bell,
   Sun,
   Moon,
@@ -27,12 +28,14 @@ import AgreementDetail from "./pages/AgreementDetail";
 import Profile from "./pages/Profile";
 import AdminPanel from "./pages/AdminPanel";
 import LandingPage from "./pages/LandingPage";
+import AdminAuth from "./pages/AdminAuth";
+import Wallet from "./pages/Wallet";
 import Onboarding from "./components/Onboarding";
 import { useChatActivity } from "./hooks/useChatActivity";
 
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth, db } from "./lib/firebase";
-import { setDoc, doc, serverTimestamp } from "firebase/firestore";
+import { setDoc, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 
 export default function App() {
   const { user, profile, loading } = useAuth();
@@ -40,9 +43,107 @@ export default function App() {
   const { t, i18n } = useTranslation();
   const [currentPage, setCurrentPage] = useState("dashboard");
   const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
+  const [isAdminMode, setIsAdminMode] = useState(false);
+  const [adminAuthenticated, setAdminAuthenticated] = useState(false);
+  const [rates, setRates] = useState<any>(null);
+
+  // System Auto-Reset: Clears legacy balances to ensure 0.00 reflection as requested
+  useEffect(() => {
+    const performReset = async () => {
+      if (user && profile && !profile.systemResetDone) {
+        try {
+          await updateDoc(doc(db, "users", user.uid), {
+            balance: 0,
+            balanceCrypto: 0,
+            balances: {
+              USD: 0,
+              BTC: 0,
+              ETH: 0
+            },
+            systemResetDone: true
+          });
+          console.log("System reset performed for user.");
+        } catch (e) {
+          console.error("Auto-reset error:", e);
+        }
+      }
+    };
+    performReset();
+  }, [user, profile]);
+
+  useEffect(() => {
+    import("./lib/marketRates").then(m => m.getUSDExchangeRates().then(setRates));
+  }, []);
+
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page);
+    setSelectedAgreementId(null);
+    setIsSidebarOpen(false);
+  };
+
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      // Initialize profile if new
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        displayName: result.user.displayName,
+        email: result.user.email,
+        reliabilityScore: 100,
+        balance: 0, 
+        balanceCrypto: 0,
+        balances: {
+          USD: 0,
+          BTC: 0,
+          ETH: 0
+        },
+        kycVerified: false,
+        onboardingCompleted: false,
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
+  const handleLogout = () => auth.signOut();
+
+  useEffect(() => {
+    // Check for invite/join parameter in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const joinDealId = urlParams.get("joinDeal");
+    if (joinDealId) {
+      setSelectedAgreementId(joinDealId);
+      // Don't auto-navigate if not logged in, but store it
+      if (user) {
+        setCurrentPage("detail");
+        // Clear the URL parameter so it doesn't keep triggering
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [user]);
+
+  useEffect(() => {
+    const handleCustomNavigate = (e: any) => {
+      if (e.detail) handleNavigate(e.detail);
+    };
+    window.addEventListener('navigate', handleCustomNavigate);
+    return () => window.removeEventListener('navigate', handleCustomNavigate);
+  }, []);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  useEffect(() => {
+    const checkSize = () => setIsDesktop(window.innerWidth >= 1024);
+    checkSize();
+    window.addEventListener('resize', checkSize);
+    return () => window.removeEventListener('resize', checkSize);
+  }, []);
+
   const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState(false);
-  const [onboardingStep, setOnboardingStep] = useState<"kyc" | "join-deal" | "completed">("kyc");
+  const [onboardingStep, setOnboardingStep] = useState<"kyc" | "completed">("kyc");
   const { recentMessages } = useChatActivity();
 
   useEffect(() => {
@@ -56,28 +157,6 @@ export default function App() {
     }
   }, [theme]);
 
-  const handleLogin = async () => {
-    try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      // Initialize profile if new
-      await setDoc(doc(db, "users", result.user.uid), {
-        uid: result.user.uid,
-        displayName: result.user.displayName,
-        email: result.user.email,
-        reliabilityScore: 100,
-        balance: 1000, // Starting bonus for simulation
-        kycVerified: false,
-        onboardingCompleted: false,
-        createdAt: serverTimestamp(),
-      }, { merge: true });
-    } catch (error) {
-      console.error("Login failed:", error);
-    }
-  };
-
-  const handleLogout = () => auth.signOut();
-
   // Authentication Guard (Simplified)
   if (loading) return (
     <div className="flex items-center justify-center h-screen bg-[#05070a]">
@@ -89,23 +168,46 @@ export default function App() {
     </div>
   );
 
-  if (!user) return <LandingPage onLogin={handleLogin} />;
+  if (!user && !isAdminMode) return <LandingPage onLogin={handleLogin} onAdminPortalClick={() => setIsAdminMode(true)} />;
+
+  if (isAdminMode && !adminAuthenticated) {
+    return (
+      <AdminAuth 
+        onBack={() => setIsAdminMode(false)} 
+        onLogin={async ({ email, pass }) => {
+          if (email === "admin@polycrow.com" && pass === "polycrow2026") {
+            setAdminAuthenticated(true);
+            return true;
+          }
+          return false;
+        }}
+      />
+    );
+  }
 
   const navItems = [
     { id: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
+    { id: "wallet", icon: WalletIcon, label: "Wallet" },
     { id: "create", icon: PlusCircle, label: t("create_agreement") },
     { id: "profile", icon: UserIcon, label: t("profile") },
-    { id: "admin", icon: ShieldCheck, label: t("admin") },
     { id: "help", icon: HelpCircle, label: t("help") },
   ];
 
-  const handleNavigate = (page: string) => {
-    setCurrentPage(page);
-    setSelectedAgreementId(null);
-    setIsSidebarOpen(false);
-  };
+  const fiatTotal = (() => {
+    if (!profile || !rates) return 0;
+    let total = 0;
+    const fiatCurrencies = ["USD", "EUR", "GBP", "KES", "NGN", "MXN", "ZAR", "GHS"];
+    fiatCurrencies.forEach(cid => {
+      const bal = profile?.balances?.[cid] || 0;
+      const rate = rates[cid] || 1;
+      total += Math.max(0, bal) / rate;
+    });
+    return total;
+  })();
 
   const renderPage = () => {
+    if (isAdminMode) return <AdminPanel onExit={() => { setIsAdminMode(false); setAdminAuthenticated(false); }} />;
+
     switch (currentPage) {
       case "dashboard": return (
         <Dashboard 
@@ -113,11 +215,16 @@ export default function App() {
           onCreateAgreement={() => handleNavigate("create")}
         />
       );
+      case "wallet": return <Wallet />;
       case "create": return <CreateAgreement onCreated={() => handleNavigate("dashboard")} />;
       case "detail": return <AgreementDetail agreementId={selectedAgreementId!} onBack={() => handleNavigate("dashboard")} />;
       case "profile": return <Profile />;
-      case "admin": return <AdminPanel />;
-      default: return <Dashboard onSelectAgreement={() => {}} />;
+      default: return (
+        <Dashboard 
+          onSelectAgreement={() => {}} 
+          onCreateAgreement={() => handleNavigate("create")}
+        />
+      );
     }
   };
 
@@ -136,7 +243,7 @@ export default function App() {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {(isSidebarOpen || (typeof window !== 'undefined' && window.innerWidth > 1024)) && (
+        {(isSidebarOpen || isDesktop) && (
           <motion.aside
             initial={{ x: -300 }}
             animate={{ x: 0 }}
@@ -254,10 +361,13 @@ export default function App() {
               </div>
               
               <div className="flex items-center gap-4">
-                <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                <button 
+                  onClick={() => handleNavigate("wallet")}
+                  className="hidden md:flex items-center gap-3 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all cursor-pointer"
+                >
                   <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{t("balance")}</span>
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">${profile?.balance || "0.00"}</span>
-                </div>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">${fiatTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </button>
                 
                 <button 
                   onClick={() => setIsNotifDrawerOpen(true)}
@@ -372,22 +482,9 @@ export default function App() {
         )}
 
         {/* Liquid Glass Background Elements */}
-        <div className="fixed inset-0 pointer-events-none overflow-hidden z-[-1]">
-          <motion.div 
-            animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
-            transition={{ repeat: Infinity, duration: 15 }}
-            className="absolute -top-[100px] -left-[100px] w-[500px] h-[500px] bg-emerald-500/20 rounded-full blur-[120px]" 
-          />
-          <motion.div 
-            animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.25, 0.15] }}
-            transition={{ repeat: Infinity, duration: 12 }}
-            className="absolute -bottom-[100px] -right-[100px] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[150px]" 
-          />
-          <motion.div 
-            animate={{ scale: [1, 1.3, 1], opacity: [0.05, 0.1, 0.05] }}
-            transition={{ repeat: Infinity, duration: 20 }}
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px]" 
-          />
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-[-1] opacity-50">
+          <div className="absolute -top-[100px] -left-[100px] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[100px]" />
+          <div className="absolute -bottom-[100px] -right-[100px] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[120px]" />
         </div>
       </main>
     </div>

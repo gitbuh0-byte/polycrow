@@ -1,6 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { GlassCard } from "../components/ui/GlassCard";
 import { 
+  initiateMpesaPush, 
+  initiateAirtelMoney, 
+  initiateMTNMoMo, 
+  initiatePaystack 
+} from "../lib/paymentGateways";
+import { 
+  Smartphone,
   ArrowLeft, 
   Clock, 
   ShieldAlert, 
@@ -13,13 +20,26 @@ import {
   Bitcoin
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
-import { doc, onSnapshot, collection, addDoc, query, orderBy, serverTimestamp, updateDoc } from "firebase/firestore";
+import { 
+  doc, 
+  onSnapshot, 
+  collection, 
+  addDoc, 
+  query, 
+  orderBy, 
+  serverTimestamp, 
+  updateDoc,
+  arrayUnion,
+  deleteDoc,
+  increment
+} from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
-import { formatAmount, getCurrencyData } from "../lib/currencyUtils";
+import { formatAmount, getCurrencyData, gateways } from "../lib/currencyUtils";
 import { CountdownTimer } from "../components/ui/CountdownTimer";
+import { getUSDExchangeRates, ExchangeRates, convertToUSD } from "../lib/marketRates";
 
 interface AgreementDetailProps {
   agreementId: string;
@@ -28,19 +48,24 @@ interface AgreementDetailProps {
 
 export default function AgreementDetail({ agreementId, onBack }: AgreementDetailProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [agreement, setAgreement] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [rates, setRates] = useState<ExchangeRates | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    getUSDExchangeRates().then(setRates);
+
     const unsubAgreement = onSnapshot(doc(db, "agreements", agreementId), (doc) => {
       if (!doc.exists()) {
         onBack();
         return;
       }
       setAgreement({ id: doc.id, ...doc.data() });
+    }, (error) => {
+      console.error("Agreement detail error:", error);
     });
 
     const q = query(
@@ -50,6 +75,8 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
 
     const unsubMessages = onSnapshot(q, (snapshot) => {
       setMessages(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    }, (error) => {
+      console.error("Agreement messages error:", error);
     });
 
     return () => {
@@ -61,6 +88,103 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  const [loading, setLoading] = useState(false);
+
+  const processPayment = async () => {
+    if (!agreement || !user) return false;
+    
+    // Find a suitable gateway for the currency
+    const gateway = gateways.find(g => g.currencies.includes(agreement.currency)) || gateways[3]; // Fallback to Paystack
+    
+    let response;
+    switch (gateway.id) {
+      case "MPESA":
+        response = await initiateMpesaPush(user.email, agreement.stakes); 
+        break;
+      case "AIRTEL":
+        response = await initiateAirtelMoney(user.email, agreement.stakes);
+        break;
+      case "MTN":
+        response = await initiateMTNMoMo(user.email, agreement.stakes);
+        break;
+      case "PAYSTACK":
+        response = await initiatePaystack(user.email, agreement.stakes);
+        break;
+      default:
+        return true; 
+    }
+
+    if (!response.success) {
+      alert(`Gateway Error: ${response.error}`);
+      return false;
+    }
+    
+    return true;
+  };
+
+  const handleFundEscrow = async () => {
+    if (!user || !profile || !agreement) return;
+    setLoading(true);
+    
+    // Check balance first
+    const cid = agreement.currency || "USD";
+    const currentBalance = Math.max(0, profile.balances?.[cid] || 0);
+    const stakes = parseFloat(agreement.stakes);
+
+    if (currentBalance < (stakes - 0.00000001)) {
+      alert(`Insufficient ${cid} balance in your wallet. (Available: ${currentBalance.toLocaleString(undefined, { maximumFractionDigits: (getCurrencyData(cid) as any)?.type === "crypto" ? 8 : 2 })})`);
+      setLoading(false);
+      return;
+    }
+
+    const paid = await processPayment();
+    if (!paid) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      // Deduct balance
+      const updateData: any = {
+        [`balances.${cid}`]: increment(-stakes)
+      };
+      await updateDoc(doc(db, "users", user.uid), updateData);
+
+      // Add transaction record
+      await addDoc(collection(db, "transactions"), {
+        userId: user.uid,
+        type: "escrow_lock",
+        amount: stakes,
+        asset: cid,
+        agreementId: agreement.id,
+        status: "completed",
+        timestamp: serverTimestamp()
+      });
+
+      const isInvited = !agreement.participants.includes(user.uid) && agreement.invitedParticipants?.includes(user.email);
+      const updatedFunded = { ...agreement.isFunded, [user.uid]: true };
+      
+      let participants = [...agreement.participants];
+      if (isInvited) participants.push(user.uid);
+
+      const isFullyFunded = participants.length >= 2 && 
+                           participants.every((uid: string) => updatedFunded[uid]);
+
+      await updateDoc(doc(db, "agreements", agreement.id), {
+        participants: isInvited ? arrayUnion(user.uid) : agreement.participants,
+        [`isFunded.${user.uid}`]: true,
+        status: isFullyFunded ? "active" : "pending"
+      });
+      
+      alert(isInvited ? "Welcome to the agreement! Your stake has been locked." : "Stake locked. Waiting for partner.");
+    } catch (e) {
+      console.error(e);
+      alert("Failed to update agreement state.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,24 +269,17 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
             <div className="grid grid-cols-2 gap-4">
               {!agreement.isFunded?.[user?.uid] && agreement.status === "pending" ? (
                 <button 
-                  onClick={async () => {
-                    if (!user) return;
-                    const updatedFunded = { ...agreement.isFunded, [user.uid]: true };
-                    const isFullyFunded = agreement.participants.length >= 2 && 
-                                         agreement.participants.every((uid: string) => updatedFunded[uid]);
-                                         
-                    await updateDoc(doc(db, "agreements", agreement.id), {
-                      [`isFunded.${user.uid}`]: true,
-                      status: isFullyFunded ? "active" : "pending" 
-                    });
-                    
-                    if (!isFullyFunded) {
-                      alert("Stake locked. Waiting for partner to also lock their stake to activate the secure channel.");
-                    }
-                  }}
-                  className="col-span-2 emerald-button py-4 rounded-2xl flex items-center justify-center gap-2 text-sm uppercase tracking-widest"
+                  onClick={handleFundEscrow}
+                  disabled={loading}
+                  className="col-span-2 bg-emerald-500 text-black font-bold py-5 rounded-3xl hover:bg-emerald-400 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 uppercase tracking-widest text-lg disabled:opacity-50"
                 >
-                  <DollarSign size={18} /> Lock My Stake ({formatAmount(agreement.stakes, agreement.currency || "USD")})
+                  {loading ? "Processing Secure Gateway..." : (
+                    <>
+                      <Smartphone size={24} /> 
+                      {agreement.participants.includes(user?.uid) ? "Lock My Stake" : "Join & Fund Escrow"} 
+                      ({formatAmount(agreement.stakes, agreement.currency || "USD")})
+                    </>
+                  )}
                 </button>
               ) : (
                 <>
@@ -246,6 +363,11 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
               <span className="text-4xl font-display font-bold text-slate-900 dark:text-white text-center px-4">
                 {formatAmount(agreement.stakes, agreement.currency || "USD")}
               </span>
+              {rates && agreement.currency !== "USD" && (
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
+                  ≈ ${convertToUSD(parseFloat(agreement.stakes), agreement.currency, rates).toLocaleString(undefined, { maximumFractionDigits: 2 })} USD
+                </span>
+              )}
               <span className="text-[10px] uppercase font-bold text-emerald-500 dark:text-emerald-400 mt-2 tracking-widest">Locked in Smart Vault</span>
             </div>
           </GlassCard>
@@ -265,11 +387,20 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                     }
                     return agreement.timerEnd ? new Date(agreement.timerEnd) : undefined;
                   })()}
-                  onExpire={agreement.status === "pending" ? async () => {
-                    console.log("Agreement expired while viewing");
-                    await deleteDoc(doc(db, "agreements", agreement.id));
-                    onBack();
-                  } : undefined}
+                  onExpire={async () => {
+                    if (agreement.status === "pending") {
+                        console.log("Agreement expired while viewing (pending)");
+                        await deleteDoc(doc(db, "agreements", agreement.id));
+                        onBack();
+                    } else if (agreement.status === "active") {
+                        console.log("Agreement expired while viewing (active)");
+                        await updateDoc(doc(db, "agreements", agreement.id), {
+                            status: "completed",
+                            completedAt: serverTimestamp()
+                        });
+                        alert("The secure window has closed. Agreement marked as completed.");
+                    }
+                  }}
                 />
               </div>
 

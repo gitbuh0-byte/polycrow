@@ -56,6 +56,24 @@
         "read": { "type": "boolean" },
         "createdAt": { "type": "string", "format": "date-time" }
       }
+    },
+    "Transaction": {
+      "title": "Wallet Transaction",
+      "description": "Ledger entry for wallet activities.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["deposit", "withdrawal", "swap"] },
+        "amount": { "type": "number" },
+        "asset": { "type": "string" },
+        "sourceAmount": { "type": "number" },
+        "sourceAsset": { "type": "string" },
+        "targetAmount": { "type": "number" },
+        "targetAsset": { "type": "string" },
+        "status": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "type", "status", "timestamp"]
     }
   },
   "firestore": {
@@ -74,6 +92,10 @@
     "/users/{userId}/notifications/{notifId}": {
       "schema": "Notification",
       "description": "User alerts."
+    },
+    "/transactions/{transactionId}": {
+      "schema": "Transaction",
+      "description": "Financial ledger entries."
     }
   }
 }

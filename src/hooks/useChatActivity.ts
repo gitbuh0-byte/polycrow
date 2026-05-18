@@ -32,7 +32,6 @@ export function useChatActivity() {
     
     const q = query(
       collectionGroup(db, "messages"),
-      orderBy("timestamp", "desc"),
       limit(10)
     );
 

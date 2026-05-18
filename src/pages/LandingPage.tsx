@@ -20,9 +20,10 @@ import { useTheme } from "../context/ThemeContext";
 
 interface LandingPageProps {
   onLogin: () => void;
+  onAdminPortalClick: () => void;
 }
 
-export default function LandingPage({ onLogin }: LandingPageProps) {
+export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPageProps) {
   const { theme, toggleTheme } = useTheme();
 
   return (
@@ -325,8 +326,8 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
             </div>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-black/5 dark:border-white/5 flex justify-between text-[10px] text-slate-400 dark:text-slate-600 uppercase font-bold tracking-widest">
-           <span>© 2026 POLY-CROW PROTOCOL</span>
+        <div className="max-w-7xl mx-auto mt-20 pt-8 border-t border-black/5 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] text-slate-400 dark:text-slate-600 uppercase font-bold tracking-widest text-center">
+           <span>© 2026 POLY-CROW PROTOCOL | <button onClick={onAdminPortalClick} className="hover:text-emerald-500 transition-colors">Admin Portal</button></span>
            <span>ESTABLISHED 2024 • V2.0.4-STABLE</span>
         </div>
       </footer>

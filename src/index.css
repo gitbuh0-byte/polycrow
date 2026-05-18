@@ -30,7 +30,7 @@
 
 @layer components {
   .liquid-glass {
-    @apply backdrop-blur-2xl border transition-all duration-300;
+    @apply backdrop-blur-lg border transition-all duration-300;
     @apply bg-white/5 border-white/10 shadow-2xl;
   }
 
@@ -39,7 +39,7 @@
   }
 
   .liquid-glass-dark {
-    @apply backdrop-blur-3xl border bg-black/20 border-white/5 shadow-2xl;
+    @apply backdrop-blur-xl border bg-black/20 border-white/5 shadow-2xl;
   }
 
   body.light .liquid-glass-dark {

@@ -32,6 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
         setProfile(doc.data() || null);
         setLoading(false);
+      }, (error) => {
+        console.error("Profile Snapshot error:", error);
+        setLoading(false);
       });
       return unsub;
     }

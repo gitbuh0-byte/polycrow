@@ -113,5 +113,10 @@ service cloud.firestore {
       allow create: if isAdmin(); // Only system/admin can send notifications
       allow update: if isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
     }
+
+    match /transactions/{transactionId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(incoming().userId);
+    }
   }
 }

@@ -1,21 +1,22 @@
 import { useState } from "react";
 import { GlassCard } from "./ui/GlassCard";
-import { Shield, Smartphone, Key, ArrowRight, CheckCircle, Search } from "lucide-react";
-import { doc, setDoc, updateDoc, collection, query, where, getDocs, arrayUnion } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { Shield, Smartphone, Key, ArrowRight, CheckCircle, ArrowLeft } from "lucide-react";
+import { doc, setDoc } from "firebase/firestore";
+import { db, auth } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 
 interface OnboardingProps {
-  step: "kyc" | "join-deal" | "completed";
-  onNext: (next: "kyc" | "join-deal" | "completed") => void;
+  step: "kyc" | "completed";
+  onNext: (next: "kyc" | "completed") => void;
   onComplete: () => void;
 }
 
 export default function Onboarding({ step, onNext, onComplete }: OnboardingProps) {
   const { user } = useAuth();
-  const [dealCode, setDealCode] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleSignOut = () => auth.signOut();
 
   const handleKycSubmit = async () => {
     if (!user) return;
@@ -24,48 +25,14 @@ export default function Onboarding({ step, onNext, onComplete }: OnboardingProps
     try {
       await setDoc(doc(db, "users", user.uid), {
         kycVerified: true,
-      }, { merge: true });
-      setLoading(false);
-      onNext("join-deal");
-    } catch (error) {
-      console.error("KYC update failed:", error);
-      // Fallback: try to setDoc if update fails (though it shouldn't if login succeeded)
-      setLoading(false);
-      onNext("join-deal");
-    }
-  };
-
-  const handleJoinDeal = async () => {
-    if (!dealCode.trim() || !user) return;
-    setLoading(true);
-    
-    try {
-      // Find agreement by code
-      const q = query(collection(db, "agreements"), where("dealCode", "==", dealCode.trim()));
-      const snapshot = await getDocs(q);
-      
-      if (snapshot.empty && dealCode !== "SKIP") {
-        alert("Invalid deal code. Use 'SKIP' to go to dashboard.");
-        setLoading(false);
-        return;
-      }
-
-      if (!snapshot.empty) {
-        const dealDoc = snapshot.docs[0];
-        await updateDoc(doc(db, "agreements", dealDoc.id), {
-          participants: arrayUnion(user.uid)
-        });
-      }
-
-      await setDoc(doc(db, "users", user.uid), {
         onboardingCompleted: true,
       }, { merge: true });
       setLoading(false);
       onComplete();
     } catch (error) {
-      console.error("Join deal failed:", error);
-      alert("Failed to join deal. Please ensure you are logged in correctly.");
+      console.error("KYC update failed:", error);
       setLoading(false);
+      onComplete();
     }
   };
 
@@ -77,8 +44,15 @@ export default function Onboarding({ step, onNext, onComplete }: OnboardingProps
         transition={{ duration: 0.8, type: "spring" }}
       >
         {step === "kyc" && (
-          <GlassCard className="p-12 flex flex-col gap-8 rounded-[48px] border-emerald-500/20 bg-emerald-500/5 backdrop-blur-3xl shadow-[0_0_50px_rgba(16,185,129,0.1)]">
-            <div className="flex flex-col items-center text-center gap-6">
+          <GlassCard className="p-12 flex flex-col gap-8 rounded-[48px] border-emerald-500/20 bg-emerald-500/5 backdrop-blur-3xl shadow-[0_0_50px_rgba(16,185,129,0.1)] relative">
+            <button 
+              onClick={handleSignOut}
+              className="absolute left-8 top-8 p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all text-slate-400 hover:text-white flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"
+            >
+              <ArrowLeft size={16} /> Exit
+            </button>
+
+            <div className="flex flex-col items-center text-center gap-6 mt-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl animate-pulse" />
                 <div className="relative w-24 h-24 bg-emerald-500 rounded-[32px] flex items-center justify-center shadow-[0_0_30px_rgba(16,185,129,0.4)]">
@@ -133,45 +107,6 @@ export default function Onboarding({ step, onNext, onComplete }: OnboardingProps
               ) : (
                 <>Initialize Secure Vault <ArrowRight size={18} /></>
               )}
-            </button>
-          </GlassCard>
-        )}
-
-        {step === "join-deal" && (
-          <GlassCard className="p-12 flex flex-col gap-10 rounded-[48px] border-emerald-500/20 bg-blue-500/5 backdrop-blur-3xl shadow-[0_0_50px_rgba(59,130,246,0.1)]">
-            <div className="flex flex-col items-center text-center gap-6">
-              <div className="relative w-24 h-24 bg-blue-500 rounded-[32px] flex items-center justify-center shadow-[0_0_30px_rgba(59,130,246,0.4)]">
-                <Key className="text-black" size={48} />
-              </div>
-              <div>
-                <h2 className="text-4xl font-display font-bold text-white mb-2">Onboard Partner</h2>
-                <p className="text-slate-400 text-sm max-w-sm">Enter the unique 6-character Deal Code to join established secure channels.</p>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              <div className="relative">
-                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-400/60 font-mono text-xl">#</div>
-                <input 
-                  value={dealCode}
-                  onChange={(e) => setDealCode(e.target.value.toUpperCase())}
-                  placeholder="DEAL-CODE"
-                  className="w-full bg-black/60 border border-white/10 rounded-3xl pl-12 pr-6 py-6 outline-none focus:border-blue-500/50 transition-all font-mono tracking-[0.5em] text-2xl text-blue-400 text-center"
-                />
-              </div>
-              
-              <div className="flex items-center gap-4 p-4 bg-white/5 rounded-2xl border border-white/5">
-                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400 items-center justify-center"><Search size={20} /></div>
-                <p className="text-[11px] text-slate-500 leading-relaxed">Don't have a code? You can <button onClick={() => setDealCode("SKIP")} className="text-blue-400 font-bold hover:underline">Create a Fresh Deal</button> once on the dashboard.</p>
-              </div>
-            </div>
-
-            <button 
-              onClick={handleJoinDeal}
-              disabled={loading || !dealCode}
-              className="bg-blue-600 hover:bg-blue-500 text-white shadow-[0_10px_30px_rgba(37,99,235,0.3)] py-6 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-[0.3em] text-xs transition-all hover:tracking-[0.4em] font-bold"
-            >
-              {loading ? "Authenticating Deal..." : <>Join Secure Channel <ArrowRight size={18} /></>}
             </button>
           </GlassCard>
         )}
