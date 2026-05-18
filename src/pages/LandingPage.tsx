@@ -33,14 +33,39 @@ const orbitNodes = [
 ];
 
 const revealTransition = { duration: 0.8, ease: [0.22, 1, 0.36, 1] };
+const heroLines = [
+  { text: "SECURE DEALS", className: "text-slate-900 dark:text-white", letterClassName: "" },
+  { text: "YOU CAN TRUST", className: "", letterClassName: "text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600 dark:from-emerald-400 dark:to-blue-500" },
+];
+
+function FlipLetters({ text, className, letterClassName }: { text: string; className?: string; letterClassName?: string }) {
+  return (
+    <span className={`letter-flip-word block ${className ?? ""}`} tabIndex={0} aria-label={text}>
+      {text.split("").map((char, index) => (
+        <span
+          key={`${char}-${index}`}
+          className={`letter-flip ${letterClassName ?? ""}`}
+          aria-hidden="true"
+          style={{ "--letter-index": index } as React.CSSProperties}
+        >
+          {char === " " ? "\u00A0" : char}
+        </span>
+      ))}
+    </span>
+  );
+}
 
 export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPageProps) {
   const { theme, toggleTheme } = useTheme();
   const { scrollYProgress } = useScroll();
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -140]);
   const backgroundScale = useTransform(scrollYProgress, [0, 0.6, 1], [1, 1.08, 1.16]);
-  const heroY = useTransform(scrollYProgress, [0, 0.35], [0, 70]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.28], [1, 0.55]);
+  const heroY = useTransform(scrollYProgress, [0, 0.22], [0, 135]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.22]);
+  const heroScale = useTransform(scrollYProgress, [0, 0.22], [1, 0.9]);
+  const navBlur = useTransform(scrollYProgress, [0, 0.08], [0, 18]);
+  const navBackdropFilter = useTransform(navBlur, (value) => `blur(${value}px)`);
+  const progressScaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#05070a] text-slate-900 dark:text-white relative overflow-x-hidden transition-colors duration-500">
@@ -57,9 +82,16 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
           transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
         />
       </motion.div>
+      <motion.div
+        className="fixed left-0 top-0 z-50 h-1 w-full origin-left bg-gradient-to-r from-emerald-400 via-cyan-400 to-blue-500"
+        style={{ scaleX: progressScaleX }}
+      />
 
       {/* Navigation */}
-      <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
+      <motion.nav
+        className="sticky top-0 z-40 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto"
+        style={{ backdropFilter: navBackdropFilter }}
+      >
         <div className="flex items-center gap-3">
           <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain brightness-125 drop-shadow-[0_0_10px_rgba(92,255,239,0.85)]" />
           <h1 className="text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
@@ -86,34 +118,28 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
             <span className="relative z-10">Get Started</span>
           </button>
         </div>
-      </nav>
+      </motion.nav>
 
       {/* Hero Section */}
-      <motion.section className="relative z-10 pt-32 pb-20 px-8 max-w-7xl mx-auto text-center" style={{ y: heroY, opacity: heroOpacity }}>
+      <motion.section className="relative z-10 pt-32 pb-20 px-8 max-w-7xl mx-auto text-center" style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-6xl md:text-8xl font-display font-bold tracking-tight mb-8 leading-[0.9] text-slate-900 dark:text-white [perspective:900px]">
-            <motion.span
-              className="block origin-center"
-              initial={{ rotateX: 82, opacity: 0 }}
-              animate={{ rotateX: [0, -8, 0], opacity: 1 }}
-              transition={{ rotateX: { duration: 5.8, repeat: Infinity, repeatDelay: 2.5, ease: "easeInOut" }, opacity: { duration: 0.8 } }}
-              style={{ transformStyle: "preserve-3d" }}
-            >
-              SECURE DEALS
-            </motion.span>
-            <motion.span
-              className="block origin-center text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600 dark:from-emerald-400 dark:to-blue-500"
-              initial={{ rotateX: -82, opacity: 0 }}
-              animate={{ rotateX: [0, 8, 0], opacity: 1 }}
-              transition={{ rotateX: { duration: 6.2, repeat: Infinity, repeatDelay: 2.1, ease: "easeInOut" }, opacity: { duration: 0.9, delay: 0.15 } }}
-              style={{ transformStyle: "preserve-3d" }}
-            >
-              YOU CAN TRUST
-            </motion.span>
+          <h1 className="hero-flip-group text-6xl md:text-8xl font-display font-bold tracking-tight mb-8 leading-[0.9] [perspective:1000px]">
+            {heroLines.map((line, lineIndex) => (
+              <motion.span
+                key={line.text}
+                className="block"
+                initial={{ opacity: 0, rotateX: lineIndex === 0 ? 72 : -72, y: 18 }}
+                animate={{ opacity: 1, rotateX: 0, y: 0 }}
+                transition={{ ...revealTransition, delay: lineIndex * 0.12 }}
+                style={{ transformStyle: "preserve-3d" }}
+              >
+                <FlipLetters text={line.text} className={line.className} letterClassName={line.letterClassName} />
+              </motion.span>
+            ))}
           </h1>
           <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
             Stop worrying about who you're dealing with. Poly-Crow holds funds in a digital vault and only releases them when both parties are happy. Simple, safe, and smart.
@@ -158,8 +184,8 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
       <motion.section
         id="features"
         className="relative z-10 py-32 px-8 max-w-7xl mx-auto"
-        initial={{ opacity: 0, y: 60 }}
-        whileInView={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0, y: 80, filter: "blur(10px)", clipPath: "inset(10% 0 0 0 round 32px)" }}
+        whileInView={{ opacity: 1, y: 0, filter: "blur(0px)", clipPath: "inset(0% 0 0 0 round 32px)" }}
         viewport={{ once: true, amount: 0.2 }}
         transition={revealTransition}
       >
@@ -205,8 +231,8 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
       <motion.section
         id="security"
         className="relative z-10 py-32 px-8 max-w-7xl mx-auto"
-        initial={{ opacity: 0, y: 70, scale: 0.97 }}
-        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        initial={{ opacity: 0, y: 90, scale: 0.94, filter: "blur(12px)" }}
+        whileInView={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
         viewport={{ once: true, amount: 0.25 }}
         transition={revealTransition}
       >
@@ -284,8 +310,8 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
       <motion.section
         id="network"
         className="relative z-10 py-32 bg-slate-50 dark:bg-white/[0.02] border-y border-black/5 dark:border-white/5 overflow-hidden"
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1 }}
+        initial={{ opacity: 0, y: 80, scale: 0.96, filter: "blur(10px)" }}
+        whileInView={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
         viewport={{ once: true, amount: 0.2 }}
         transition={{ duration: 0.9 }}
       >
