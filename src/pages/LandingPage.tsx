@@ -23,6 +23,15 @@ interface LandingPageProps {
   onAdminPortalClick: () => void;
 }
 
+const orbitNodes = [
+  { size: 18, start: 10, ring: [40, 80, 40], duration: 12, delay: 0, direction: 1 },
+  { size: 16, start: 92, ring: [80, 40, 80], duration: 15, delay: -3, direction: -1 },
+  { size: 17, start: 176, ring: [40, 40, 80, 40], duration: 18, delay: -6, direction: 1 },
+  { size: 15, start: 238, ring: [80, 80, 40, 80], duration: 14, delay: -2, direction: 1 },
+  { size: 16, start: 304, ring: [40, 80, 80, 40], duration: 20, delay: -9, direction: -1 },
+  { size: 14, start: 350, ring: [80, 40, 40, 80], duration: 16, delay: -5, direction: 1 },
+];
+
 export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPageProps) {
   const { theme, toggleTheme } = useTheme();
 
@@ -250,25 +259,77 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
                 <div className="absolute inset-20 border border-emerald-500/10 rounded-full" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 p-12 bg-emerald-500/10 rounded-full blur-3xl" />
                 
-                {/* Floating "Nodes" */}
-                {[...Array(6)].map((_, i) => (
+                {/* Orbiting Nodes */}
+                {orbitNodes.map((node, i) => (
                   <motion.div
                     key={i}
-                    animate={{ 
-                      y: [0, -20, 0],
-                      opacity: [0.3, 1, 0.3]
-                    }}
-                    transition={{ 
-                      duration: 3 + i, 
-                      repeat: Infinity,
-                      delay: i * 0.5
-                    }}
-                    className="absolute w-4 h-4 bg-emerald-400 rounded-full shadow-[0_0_15px_#34d399]"
+                    className="absolute rounded-full"
                     style={{
-                      top: `${20 + Math.random() * 60}%`,
-                      left: `${20 + Math.random() * 60}%`,
+                      top: node.ring[0],
+                      right: node.ring[0],
+                      bottom: node.ring[0],
+                      left: node.ring[0],
                     }}
-                  />
+                    animate={{
+                      rotate: node.start + (node.direction * 360),
+                      top: node.ring,
+                      right: node.ring,
+                      bottom: node.ring,
+                      left: node.ring,
+                    }}
+                    transition={{
+                      rotate: {
+                        duration: node.duration,
+                        ease: "linear",
+                        repeat: Infinity,
+                        delay: node.delay,
+                      },
+                      top: {
+                        duration: node.duration,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        delay: node.delay,
+                      },
+                      right: {
+                        duration: node.duration,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        delay: node.delay,
+                      },
+                      bottom: {
+                        duration: node.duration,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        delay: node.delay,
+                      },
+                      left: {
+                        duration: node.duration,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        delay: node.delay,
+                      },
+                    }}
+                  >
+                    <motion.span
+                      className="absolute left-1/2 top-0 block rounded-full bg-emerald-400 shadow-[0_0_18px_#34d399]"
+                      style={{
+                        width: node.size,
+                        height: node.size,
+                        x: "-50%",
+                        y: "-50%",
+                      }}
+                      animate={{
+                        scale: [0.85, 1.18, 0.85],
+                        opacity: [0.65, 1, 0.65],
+                      }}
+                      transition={{
+                        duration: 2.8 + i * 0.25,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        delay: node.delay,
+                      }}
+                    />
+                  </motion.div>
                 ))}
                 
                 <div className="absolute inset-0 flex items-center justify-center">
