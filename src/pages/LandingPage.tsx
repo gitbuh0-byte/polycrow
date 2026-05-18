@@ -37,7 +37,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain" />
+          <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain brightness-125 drop-shadow-[0_0_10px_rgba(92,255,239,0.85)]" />
           <h1 className="text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
         </div>
         <div className="hidden md:flex items-center gap-8">
@@ -272,7 +272,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
                 ))}
                 
                 <div className="absolute inset-0 flex items-center justify-center">
-                   <img src="/logo.png" alt="Logo" className="w-32 h-32 object-contain opacity-10" />
+                   <img src="/logo.png" alt="Logo" className="w-32 h-32 object-contain opacity-[0.35] brightness-150 drop-shadow-[0_0_18px_rgba(92,255,239,0.75)]" />
                 </div>
              </div>
           </div>
@@ -284,7 +284,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12">
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain" />
+              <img src="/logo.png" alt="Logo" className="w-8 h-8 object-contain brightness-125 drop-shadow-[0_0_8px_rgba(92,255,239,0.8)]" />
               <h1 className="text-lg font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
             </div>
             <p className="text-sm text-slate-500 dark:text-slate-500 max-w-xs">

@@ -260,7 +260,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-3">
-                <img src="/logo.png" alt="Poly-Crow Logo" className="w-10 h-10 object-contain" />
+                <img src="/logo.png" alt="Poly-Crow Logo" className="w-10 h-10 object-contain brightness-125 drop-shadow-[0_0_10px_rgba(92,255,239,0.85)]" />
                 <h1 className="text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
               </div>
               <button 

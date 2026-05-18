@@ -57,7 +57,7 @@ export default function Onboarding({ step, onNext, onComplete }: OnboardingProps
             <div className="flex flex-col items-center text-center gap-6 mt-4">
               <div className="relative">
                 <div className="absolute inset-0 bg-emerald-500/20 rounded-full blur-2xl animate-pulse" />
-                <img src="/logo.png" alt="Poly-Crow" className="relative w-24 h-24 object-contain" />
+                <img src="/logo.png" alt="Poly-Crow" className="relative w-24 h-24 object-contain brightness-125 drop-shadow-[0_0_14px_rgba(92,255,239,0.85)]" />
               </div>
               <div>
                 <h2 className="text-4xl font-display font-bold text-white mb-2">Biometric Escrow Entry</h2>
