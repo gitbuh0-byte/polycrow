@@ -1,5 +1,5 @@
 import React from "react";
-import { motion } from "framer-motion";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { 
   ShieldCheck, 
   Lock, 
@@ -32,16 +32,31 @@ const orbitNodes = [
   { size: 14, start: 350, ring: [80, 40, 40, 80], duration: 16, delay: -5, direction: 1 },
 ];
 
+const revealTransition = { duration: 0.8, ease: [0.22, 1, 0.36, 1] };
+
 export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPageProps) {
   const { theme, toggleTheme } = useTheme();
+  const { scrollYProgress } = useScroll();
+  const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -140]);
+  const backgroundScale = useTransform(scrollYProgress, [0, 0.6, 1], [1, 1.08, 1.16]);
+  const heroY = useTransform(scrollYProgress, [0, 0.35], [0, 70]);
+  const heroOpacity = useTransform(scrollYProgress, [0, 0.28], [1, 0.55]);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#05070a] text-slate-900 dark:text-white relative overflow-x-hidden transition-colors duration-500">
       {/* Dynamic Background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px] animate-pulse" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[150px]" />
-      </div>
+      <motion.div className="fixed inset-0 z-0" style={{ y: backgroundY, scale: backgroundScale }}>
+        <motion.div
+          className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/10 rounded-full blur-[120px]"
+          animate={{ borderRadius: ["42%", "58% 42% 48% 52%", "42%"], rotate: [0, 18, 0] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-600/10 rounded-full blur-[150px]"
+          animate={{ borderRadius: ["50%", "38% 62% 54% 46%", "50%"], rotate: [0, -14, 0] }}
+          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </motion.div>
 
       {/* Navigation */}
       <nav className="relative z-10 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto">
@@ -58,7 +73,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
         <div className="flex items-center gap-4">
           <button 
             onClick={toggleTheme}
-            className="p-2 rounded-xl bg-black/5 dark:bg-white/5 border border-black/5 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
+            className="poly-button-secondary p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
             aria-label="Toggle theme"
           >
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
@@ -66,23 +81,39 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
           
           <button 
             onClick={onLogin}
-            className="px-6 py-2 bg-slate-900 dark:bg-white text-white dark:text-black font-bold rounded-xl hover:bg-emerald-500 dark:hover:bg-emerald-400 transition-all hover:scale-105 active:scale-95 shadow-lg"
+            className="poly-button-primary px-6 py-2 text-sm"
           >
-            Get Started
+            <span className="relative z-10">Get Started</span>
           </button>
         </div>
       </nav>
 
       {/* Hero Section */}
-      <section className="relative z-10 pt-32 pb-20 px-8 max-w-7xl mx-auto text-center">
+      <motion.section className="relative z-10 pt-32 pb-20 px-8 max-w-7xl mx-auto text-center" style={{ y: heroY, opacity: heroOpacity }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="text-6xl md:text-8xl font-display font-bold tracking-tight mb-8 leading-[0.9] text-slate-900 dark:text-white">
-            SECURE DEALS <br /> 
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600 dark:from-emerald-400 dark:to-blue-500">YOU CAN TRUST</span>
+          <h1 className="text-6xl md:text-8xl font-display font-bold tracking-tight mb-8 leading-[0.9] text-slate-900 dark:text-white [perspective:900px]">
+            <motion.span
+              className="block origin-center"
+              initial={{ rotateX: 82, opacity: 0 }}
+              animate={{ rotateX: [0, -8, 0], opacity: 1 }}
+              transition={{ rotateX: { duration: 5.8, repeat: Infinity, repeatDelay: 2.5, ease: "easeInOut" }, opacity: { duration: 0.8 } }}
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              SECURE DEALS
+            </motion.span>
+            <motion.span
+              className="block origin-center text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600 dark:from-emerald-400 dark:to-blue-500"
+              initial={{ rotateX: -82, opacity: 0 }}
+              animate={{ rotateX: [0, 8, 0], opacity: 1 }}
+              transition={{ rotateX: { duration: 6.2, repeat: Infinity, repeatDelay: 2.1, ease: "easeInOut" }, opacity: { duration: 0.9, delay: 0.15 } }}
+              style={{ transformStyle: "preserve-3d" }}
+            >
+              YOU CAN TRUST
+            </motion.span>
           </h1>
           <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
             Stop worrying about who you're dealing with. Poly-Crow holds funds in a digital vault and only releases them when both parties are happy. Simple, safe, and smart.
@@ -90,12 +121,12 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button 
               onClick={onLogin}
-              className="w-full sm:w-auto px-8 py-4 bg-emerald-500 text-white font-bold rounded-2xl flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-[0_0_30px_rgba(16,185,129,0.3)]"
+              className="poly-button-primary w-full sm:w-auto px-8 py-4 gap-2"
             >
-              Start Your First Deal <ChevronRight size={20} />
+              <span className="relative z-10 flex items-center gap-2">Start Your First Deal <ChevronRight size={20} /></span>
             </button>
-            <button className="w-full sm:w-auto px-8 py-4 bg-white dark:bg-white/5 border border-black/10 dark:border-white/10 text-slate-900 dark:text-white font-bold rounded-2xl hover:bg-slate-50 dark:hover:bg-white/10 transition-all">
-              How it works
+            <button className="poly-button-secondary w-full sm:w-auto px-8 py-4">
+              <span className="relative z-10">How it works</span>
             </button>
           </div>
         </motion.div>
@@ -108,24 +139,38 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
             { label: "Avg. Resolution", value: "2.4h" },
             { label: "Active Nodes", value: "12,402" },
           ].map((stat, i) => (
-            <div key={i} className="p-6 rounded-2xl bg-white dark:bg-white/5 border border-black/5 dark:border-white/10 shadow-sm backdrop-blur-sm transition-all hover:scale-105">
+            <motion.div
+              key={i}
+              className="morph-glass p-6 rounded-[22px] bg-white/80 dark:bg-white/[0.07] border border-black/5 dark:border-white/10 shadow-sm backdrop-blur-xl transition-all hover:scale-105"
+              whileInView={{ opacity: 1, y: 0, borderRadius: i % 2 === 0 ? "30px 18px 30px 18px" : "18px 30px 18px 30px" }}
+              initial={{ opacity: 0, y: 28 }}
+              viewport={{ once: true, amount: 0.35 }}
+              transition={{ ...revealTransition, delay: i * 0.08 }}
+            >
               <p className="text-[10px] uppercase tracking-widest font-bold text-slate-500 mb-1">{stat.label}</p>
               <p className="text-2xl font-display font-bold text-emerald-600 dark:text-emerald-400">{stat.value}</p>
-            </div>
+            </motion.div>
           ))}
         </div>
-      </section>
+      </motion.section>
 
       {/* Features Grid */}
-      <section id="features" className="relative z-10 py-32 px-8 max-w-7xl mx-auto">
+      <motion.section
+        id="features"
+        className="relative z-10 py-32 px-8 max-w-7xl mx-auto"
+        initial={{ opacity: 0, y: 60 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={revealTransition}
+      >
         <div className="text-center mb-20">
           <h2 className="text-4xl font-display font-bold mb-4">BUILT FOR ZERO RISK</h2>
           <p className="text-slate-500 dark:text-slate-400">Our multi-layered protection keeps your money exactly where it should be.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <GlassCard className="p-8 flex flex-col gap-6 group hover:border-emerald-500/50 transition-colors bg-white dark:bg-white/5 border-black/5 dark:border-white/5">
-            <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+          <GlassCard className="morph-glass p-8 flex flex-col gap-6 group hover:border-emerald-500/50 transition-colors bg-white/80 dark:bg-white/[0.07] border-black/5 dark:border-white/5">
+            <div className="w-14 h-14 bg-emerald-500/10 rounded-[18px] flex items-center justify-center text-emerald-600 dark:text-emerald-400 group-hover:scale-110 group-hover:rounded-[28px_14px_28px_14px] transition-all duration-500">
               <Lock size={28} />
             </div>
             <div>
@@ -134,8 +179,8 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
             </div>
           </GlassCard>
 
-          <GlassCard className="p-8 flex flex-col gap-6 group hover:border-blue-500/50 transition-colors bg-white dark:bg-white/5 border-black/5 dark:border-white/5">
-            <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+          <GlassCard className="morph-glass p-8 flex flex-col gap-6 group hover:border-blue-500/50 transition-colors bg-white/80 dark:bg-white/[0.07] border-black/5 dark:border-white/5">
+            <div className="w-14 h-14 bg-blue-500/10 rounded-[18px] flex items-center justify-center text-blue-600 dark:text-blue-400 group-hover:scale-110 group-hover:rounded-[14px_28px_14px_28px] transition-all duration-500">
               <Zap size={28} />
             </div>
             <div>
@@ -144,8 +189,8 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
             </div>
           </GlassCard>
 
-          <GlassCard className="p-8 flex flex-col gap-6 group hover:border-purple-500/50 transition-colors bg-white dark:bg-white/5 border-black/5 dark:border-white/5">
-            <div className="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
+          <GlassCard className="morph-glass p-8 flex flex-col gap-6 group hover:border-purple-500/50 transition-colors bg-white/80 dark:bg-white/[0.07] border-black/5 dark:border-white/5">
+            <div className="w-14 h-14 bg-purple-500/10 rounded-[18px] flex items-center justify-center text-purple-600 dark:text-purple-400 group-hover:scale-110 group-hover:rounded-[28px_14px_28px_14px] transition-all duration-500">
               <Anchor size={28} />
             </div>
             <div>
@@ -154,11 +199,18 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
             </div>
           </GlassCard>
         </div>
-      </section>
+      </motion.section>
 
       {/* Security Section */}
-      <section id="security" className="relative z-10 py-32 px-8 max-w-7xl mx-auto">
-        <GlassCard className="p-12 md:p-20 rounded-[48px] bg-gradient-to-br from-slate-900 to-black dark:from-emerald-500/10 dark:to-blue-500/5 border-none overflow-hidden relative">
+      <motion.section
+        id="security"
+        className="relative z-10 py-32 px-8 max-w-7xl mx-auto"
+        initial={{ opacity: 0, y: 70, scale: 0.97 }}
+        whileInView={{ opacity: 1, y: 0, scale: 1 }}
+        viewport={{ once: true, amount: 0.25 }}
+        transition={revealTransition}
+      >
+        <GlassCard className="morph-glass p-12 md:p-20 rounded-[34px] bg-gradient-to-br from-slate-900 to-black dark:from-emerald-500/10 dark:to-blue-500/5 border-none overflow-hidden relative">
           <div className="absolute top-0 right-0 p-12 opacity-10">
             <Shield size={300} />
           </div>
@@ -189,7 +241,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
               </div>
             </div>
             
-            <div className="bg-white/5 backdrop-blur-2xl rounded-3xl p-8 border border-white/10 shadow-2xl">
+            <div className="morph-glass bg-white/[0.07] backdrop-blur-2xl rounded-[24px] p-8 border border-white/10 shadow-2xl">
               <div className="space-y-6">
                 {[
                   { label: "Encryption", status: "AES-256-GCM", color: "bg-emerald-500" },
@@ -226,10 +278,17 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
             </div>
           </div>
         </GlassCard>
-      </section>
+      </motion.section>
 
       {/* Network Preview */}
-      <section id="network" className="relative z-10 py-32 bg-slate-50 dark:bg-white/[0.02] border-y border-black/5 dark:border-white/5 overflow-hidden">
+      <motion.section
+        id="network"
+        className="relative z-10 py-32 bg-slate-50 dark:bg-white/[0.02] border-y border-black/5 dark:border-white/5 overflow-hidden"
+        initial={{ opacity: 0 }}
+        whileInView={{ opacity: 1 }}
+        viewport={{ once: true, amount: 0.2 }}
+        transition={{ duration: 0.9 }}
+      >
         <div className="px-8 max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-20">
           <div className="flex-1">
             <h2 className="text-5xl font-display font-bold mb-8 leading-tight text-slate-900 dark:text-white">GLOBAL TRUST <br /> WITHOUT BORDERS</h2>
@@ -240,7 +299,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
                 { icon: BarChart3, title: "Real-time Audits", desc: "Monitor your deal health with enterprise-grade analytics tools." },
               ].map((item, i) => (
                 <div key={i} className="flex gap-6">
-                  <div className="flex-shrink-0 w-12 h-12 bg-white dark:bg-white/5 rounded-full flex items-center justify-center border border-black/5 dark:border-white/10 shadow-sm">
+                  <div className="morph-glass flex-shrink-0 w-12 h-12 bg-white dark:bg-white/5 rounded-[18px] flex items-center justify-center border border-black/5 dark:border-white/10 shadow-sm">
                     <item.icon size={20} className="text-emerald-500 dark:text-emerald-400" />
                   </div>
                   <div>
@@ -338,7 +397,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
              </div>
           </div>
         </div>
-      </section>
+      </motion.section>
 
       {/* Footer */}
       <footer className="relative z-10 pt-32 pb-20 px-8 border-t border-black/5 dark:border-white/5">

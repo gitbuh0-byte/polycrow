@@ -10,7 +10,7 @@ import firebaseConfig from "../../firebase-applet-config.json";
 
 const appFirebaseConfig = {
   ...firebaseConfig,
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? firebaseConfig.apiKey,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
 };
 
 export const firebaseAvailable = Boolean(appFirebaseConfig.apiKey);
