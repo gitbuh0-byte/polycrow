@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { collectionGroup, query, where, orderBy, limit, onSnapshot } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, firebaseAvailable } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 
 export interface ChatMessage {
@@ -17,7 +17,10 @@ export function useChatActivity() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !firebaseAvailable) {
+      setLoading(false);
+      return;
+    }
 
     // Use collectionGroup to find recent messages across all paths
     // Note: This requires a composite index for collectionGroup 'messages'

@@ -3,13 +3,15 @@ import { Users, ShieldCheck, Database, LayoutPanelLeft, MoreHorizontal, Activity
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import { collection, query, limit, onSnapshot } from "firebase/firestore";
-import { db } from "../lib/firebase";
+import { db, firebaseAvailable } from "../lib/firebase";
 
 export default function AdminPanel({ onExit }: { onExit: () => void }) {
   const { t } = useTranslation();
   const [agreements, setAgreements] = useState<any[]>([]);
 
   useEffect(() => {
+    if (!firebaseAvailable) return;
+
     const q = query(collection(db, "agreements"), limit(10));
     return onSnapshot(q, (snapshot) => {
       setAgreements(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));

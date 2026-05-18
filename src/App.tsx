@@ -34,7 +34,7 @@ import Onboarding from "./components/Onboarding";
 import { useChatActivity } from "./hooks/useChatActivity";
 
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
-import { auth, db } from "./lib/firebase";
+import { auth, db, firebaseAvailable } from "./lib/firebase";
 import { setDoc, doc, serverTimestamp, updateDoc } from "firebase/firestore";
 
 export default function App() {
@@ -50,7 +50,7 @@ export default function App() {
   // System Auto-Reset: Clears legacy balances to ensure 0.00 reflection as requested
   useEffect(() => {
     const performReset = async () => {
-      if (user && profile && !profile.systemResetDone) {
+      if (user && profile && !profile.systemResetDone && firebaseAvailable) {
         try {
           await updateDoc(doc(db, "users", user.uid), {
             balance: 0,
@@ -82,6 +82,11 @@ export default function App() {
   };
 
   const handleLogin = async () => {
+    if (!firebaseAvailable) {
+      alert("Firebase is not configured. Set VITE_FIREBASE_API_KEY to enable login.");
+      return;
+    }
+
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
@@ -107,7 +112,9 @@ export default function App() {
     }
   };
 
-  const handleLogout = () => auth.signOut();
+  const handleLogout = () => {
+    if (firebaseAvailable) auth.signOut();
+  };
 
   useEffect(() => {
     // Check for invite/join parameter in URL

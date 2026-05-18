@@ -2,7 +2,7 @@ import { useState } from "react";
 import { GlassCard } from "./ui/GlassCard";
 import { Shield, Smartphone, Key, ArrowRight, CheckCircle, ArrowLeft } from "lucide-react";
 import { doc, setDoc } from "firebase/firestore";
-import { db, auth } from "../lib/firebase";
+import { db, auth, firebaseAvailable } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "framer-motion";
 
@@ -16,10 +16,12 @@ export default function Onboarding({ step, onNext, onComplete }: OnboardingProps
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
 
-  const handleSignOut = () => auth.signOut();
+  const handleSignOut = () => {
+    if (firebaseAvailable) auth.signOut();
+  };
 
   const handleKycSubmit = async () => {
-    if (!user) return;
+    if (!user || !firebaseAvailable) return;
     setLoading(true);
     // Simulate KYC processing
     try {

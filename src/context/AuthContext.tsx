@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { onAuthStateChanged, type User } from "firebase/auth";
 import { doc, onSnapshot } from "firebase/firestore";
-import { auth, db } from "../lib/firebase";
+import { auth, db, firebaseAvailable } from "../lib/firebase";
 
 interface AuthContextType {
   user: User | null;
@@ -17,6 +17,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (!firebaseAvailable) {
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       if (!u) {
@@ -28,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (user) {
+    if (user && firebaseAvailable) {
       const unsub = onSnapshot(doc(db, "users", user.uid), (doc) => {
         setProfile(doc.data() || null);
         setLoading(false);
