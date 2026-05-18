@@ -253,9 +253,7 @@ export default function App() {
           >
             <div className="flex items-center justify-between px-2">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)]">
-                  <ShieldCheck className="text-black" size={24} />
-                </div>
+                <img src="/logo.png" alt="Poly-Crow Logo" className="w-10 h-10 object-contain" />
                 <h1 className="text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
               </div>
               <button 

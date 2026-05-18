@@ -51,9 +51,7 @@ export default function AdminAuth({ onBack, onLogin }: AdminAuthProps) {
 
         <GlassCard className="p-10 border-red-500/20 bg-white/5">
           <div className="flex flex-col items-center gap-6 mb-10">
-            <div className="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(239,68,68,0.3)]">
-              <ShieldCheck className="text-white" size={32} />
-            </div>
+            <img src="/logo.png" alt="Logo" className="w-16 h-16 object-contain" />
             <div className="text-center">
               <h2 className="text-2xl font-display font-bold text-white uppercase tracking-tight">Admin Override</h2>
               <p className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mt-1">Level 4 Clearance Required</p>
