@@ -5,8 +5,13 @@ import { getFirestore, doc, getDocFromServer } from "firebase/firestore";
 // This file is expected to be created by the set_up_firebase tool
 import firebaseConfig from "../../firebase-applet-config.json";
 
-const app = initializeApp(firebaseConfig);
-export const db = getFirestore(app, firebaseConfig.firestoreDatabaseId);
+const appFirebaseConfig = {
+  ...firebaseConfig,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY ?? firebaseConfig.apiKey,
+};
+
+const app = initializeApp(appFirebaseConfig);
+export const db = getFirestore(app, appFirebaseConfig.firestoreDatabaseId);
 export const auth = getAuth(app);
 
 async function testConnection() {
