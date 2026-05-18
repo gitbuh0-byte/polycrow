@@ -1,0 +1,79 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User profile with trust ratings and wallet balance.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "reliabilityScore": { "type": "number", "description": "0-100 score based on fulfilled agreements." },
+        "balance": { "type": "number", "description": "Simulated escrow balance." },
+        "totalAgreements": { "type": "number" },
+        "successfulAgreements": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "displayName", "email"]
+    },
+    "Agreement": {
+      "title": "Escrow Agreement",
+      "description": "An agreement between participants with defined stakes and timers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "participants": { "type": "array" },
+        "stakes": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "active", "completed", "disputed", "breached"] },
+        "timerEnd": { "type": "string", "format": "date-time" },
+        "createdBy": { "type": "string" },
+        "liquidator": { "type": "string", "description": "The person who triggered a breach claim." },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "participants", "stakes", "status"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "Real-time communication within an agreement.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "text": { "type": "string" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Critical alerts for users.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "message": { "type": "string" },
+        "type": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile data."
+    },
+    "/agreements/{agreementId}": {
+      "schema": "Agreement",
+      "description": "Escrow agreement documents."
+    },
+    "/agreements/{agreementId}/messages/{messageId}": {
+      "schema": "ChatMessage",
+      "description": "Messages for an agreement."
+    },
+    "/users/{userId}/notifications/{notifId}": {
+      "schema": "Notification",
+      "description": "User alerts."
+    }
+  }
+}

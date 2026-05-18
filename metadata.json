@@ -1,0 +1,12 @@
+{
+  "name": "Poly-Crow",
+  "description": "A high-stakes liquid-glass escrow PWA for secure agreements with real-time chat, reliability ratings, and automated timers.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "notifications"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

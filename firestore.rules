@@ -1,0 +1,117 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Master Gate: Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helpers ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      // Bootstrapped admin from runtime metadata
+      return isSignedIn() && request.auth.token.email == 'jojienoir@gmail.com';
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Entity Validations ---
+
+    function isValidUser(data) {
+      return data.uid == request.auth.uid 
+        && (data.get('displayName', '') is string && data.get('displayName', '').size() <= 100)
+        && (data.get('email', '') is string && data.get('email', '').size() <= 100)
+        && (data.get('reliabilityScore', 100) is number)
+        && (data.get('balance', 0) is number)
+        && (data.get('kycVerified', false) is bool)
+        && (data.get('onboardingCompleted', false) is bool)
+        && (data.get('createdAt', request.time) is timestamp)
+        && data.keys().hasAll(['uid']);
+    }
+
+    function isValidAgreement(data) {
+      return data.title is string && data.title.size() <= 200
+        && data.description is string && data.description.size() <= 2000
+        && data.participants is list && data.participants.size() >= 1 && data.participants.size() <= 10
+        && data.stakes is number && data.stakes >= 0
+        && data.status in ['pending', 'active', 'completed', 'disputed', 'breached']
+        && data.createdBy == request.auth.uid
+        && (data.get('dealCode', '') is string)
+        && (data.get('isFunded', {}) is map)
+        && data.keys().hasAll(['title', 'description', 'participants', 'stakes', 'status', 'createdBy']);
+    }
+
+    function isValidChatMessage(data, agreementId) {
+      let agreement = get(/databases/$(database)/documents/agreements/$(agreementId)).data;
+      let participants = agreement.participants;
+      let invited = agreement.get('invitedParticipants', []);
+      return data.senderId == request.auth.uid
+        && (request.auth.uid in participants || request.auth.token.email in invited)
+        && data.text is string && data.text.size() <= 1000
+        && data.timestamp == request.time
+        && data.keys().hasAll(['senderId', 'text', 'timestamp']);
+    }
+
+    function isValidNotification(data) {
+      return data.title is string && data.title.size() <= 200
+        && data.message is string && data.message.size() <= 1000
+        && data.read is bool
+        && (data.get('createdAt', request.time) is timestamp)
+        && data.keys().hasAll(['title', 'message', 'read']);
+    }
+
+    // --- Match Routes ---
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin();
+    }
+
+    match /agreements/{agreementId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn();
+      
+      allow create: if isSignedIn();
+      
+      allow update: if isSignedIn() && (
+        (request.auth.uid in resource.data.participants) ||
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants'])) ||
+        isAdmin()
+      );
+
+      allow delete: if isSignedIn() && (resource.data.createdBy == request.auth.uid || isAdmin());
+
+      match /messages/{messageId} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    match /{path=**}/messages/{messageId} {
+      allow read: if isSignedIn();
+    }
+
+    match /users/{userId}/notifications/{notifId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAdmin(); // Only system/admin can send notifications
+      allow update: if isOwner(userId) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+    }
+  }
+}

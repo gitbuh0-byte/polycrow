@@ -1,0 +1,395 @@
+import { useState, useEffect } from "react";
+import { 
+  LayoutDashboard, 
+  PlusCircle, 
+  ShieldCheck, 
+  MessageSquare, 
+  User as UserIcon,
+  Bell,
+  Sun,
+  Moon,
+  LogOut,
+  HelpCircle,
+  Menu,
+  X
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "./context/AuthContext";
+import { useTheme } from "./context/ThemeContext";
+import { useTranslation } from "react-i18next";
+import { GlassCard } from "./components/ui/GlassCard";
+import "./lib/i18n";
+
+// Pages (Simulated for this implementation)
+import Dashboard from "./pages/Dashboard";
+import CreateAgreement from "./pages/CreateAgreement";
+import AgreementDetail from "./pages/AgreementDetail";
+import Profile from "./pages/Profile";
+import AdminPanel from "./pages/AdminPanel";
+import LandingPage from "./pages/LandingPage";
+import Onboarding from "./components/Onboarding";
+import { useChatActivity } from "./hooks/useChatActivity";
+
+import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { auth, db } from "./lib/firebase";
+import { setDoc, doc, serverTimestamp } from "firebase/firestore";
+
+export default function App() {
+  const { user, profile, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const { t, i18n } = useTranslation();
+  const [currentPage, setCurrentPage] = useState("dashboard");
+  const [selectedAgreementId, setSelectedAgreementId] = useState<string | null>(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isNotifDrawerOpen, setIsNotifDrawerOpen] = useState(false);
+  const [onboardingStep, setOnboardingStep] = useState<"kyc" | "join-deal" | "completed">("kyc");
+  const { recentMessages } = useChatActivity();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "dark") {
+      root.classList.add("dark");
+      root.classList.remove("light");
+    } else {
+      root.classList.add("light");
+      root.classList.remove("dark");
+    }
+  }, [theme]);
+
+  const handleLogin = async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      // Initialize profile if new
+      await setDoc(doc(db, "users", result.user.uid), {
+        uid: result.user.uid,
+        displayName: result.user.displayName,
+        email: result.user.email,
+        reliabilityScore: 100,
+        balance: 1000, // Starting bonus for simulation
+        kycVerified: false,
+        onboardingCompleted: false,
+        createdAt: serverTimestamp(),
+      }, { merge: true });
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
+  };
+
+  const handleLogout = () => auth.signOut();
+
+  // Authentication Guard (Simplified)
+  if (loading) return (
+    <div className="flex items-center justify-center h-screen bg-[#05070a]">
+      <motion.div 
+        animate={{ scale: [1, 1.2, 1], rotate: 360 }} 
+        transition={{ repeat: Infinity, duration: 2 }}
+        className="w-12 h-12 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full"
+      />
+    </div>
+  );
+
+  if (!user) return <LandingPage onLogin={handleLogin} />;
+
+  const navItems = [
+    { id: "dashboard", icon: LayoutDashboard, label: t("dashboard") },
+    { id: "create", icon: PlusCircle, label: t("create_agreement") },
+    { id: "profile", icon: UserIcon, label: t("profile") },
+    { id: "admin", icon: ShieldCheck, label: t("admin") },
+    { id: "help", icon: HelpCircle, label: t("help") },
+  ];
+
+  const handleNavigate = (page: string) => {
+    setCurrentPage(page);
+    setSelectedAgreementId(null);
+    setIsSidebarOpen(false);
+  };
+
+  const renderPage = () => {
+    switch (currentPage) {
+      case "dashboard": return (
+        <Dashboard 
+          onSelectAgreement={(id) => { setSelectedAgreementId(id); handleNavigate("detail"); }} 
+          onCreateAgreement={() => handleNavigate("create")}
+        />
+      );
+      case "create": return <CreateAgreement onCreated={() => handleNavigate("dashboard")} />;
+      case "detail": return <AgreementDetail agreementId={selectedAgreementId!} onBack={() => handleNavigate("dashboard")} />;
+      case "profile": return <Profile />;
+      case "admin": return <AdminPanel />;
+      default: return <Dashboard onSelectAgreement={() => {}} />;
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex text-inherit">
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsSidebarOpen(false)}
+            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden"
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence mode="wait">
+        {(isSidebarOpen || (typeof window !== 'undefined' && window.innerWidth > 1024)) && (
+          <motion.aside
+            initial={{ x: -300 }}
+            animate={{ x: 0 }}
+            exit={{ x: -300 }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed lg:relative z-50 w-72 h-screen p-6 flex flex-col gap-8 bg-white/5 lg:bg-transparent backdrop-blur-3xl border-r border-black/5 dark:border-white/10"
+          >
+            <div className="flex items-center justify-between px-2">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center shadow-[0_0_20px_rgba(16,185,129,0.4)]">
+                  <ShieldCheck className="text-black" size={24} />
+                </div>
+                <h1 className="text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
+              </div>
+              <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="lg:hidden p-2 text-slate-500 hover:text-white"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <nav className="flex-1 flex flex-col gap-2">
+              {navItems.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => handleNavigate(item.id)}
+                  className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ${
+                    currentPage === item.id 
+                    ? "bg-white/10 text-emerald-500 dark:text-emerald-400 border border-white/10 shadow-lg" 
+                    : "text-slate-500 dark:text-slate-400 hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
+                  }`}
+                >
+                  <div className={`w-2 h-2 rounded-full transition-all ${currentPage === item.id ? "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-transparent"}`} />
+                  <span className="font-medium">{item.label}</span>
+                </button>
+              ))}
+            </nav>
+
+            <div className="flex flex-col gap-4 mt-auto">
+              <GlassCard className="p-4 rounded-2xl border-white/5 bg-white/5" hover={false} animate={false}>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center">
+                    <UserIcon size={16} className="text-slate-400" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-slate-900 dark:text-white truncate">{profile?.displayName || "Guardian"}</p>
+                    <p className="text-[10px] text-emerald-500 dark:text-emerald-400">Reliability: {profile?.reliabilityScore || "98"}%</p>
+                  </div>
+                </div>
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg py-1 px-2 text-center text-[10px] text-emerald-400 font-bold tracking-widest">
+                  2FA SECURED
+                </div>
+              </GlassCard>
+              
+              <div className="flex items-center justify-between px-2">
+                <button 
+                  onClick={toggleTheme}
+                  className="p-2 text-slate-500 hover:text-white transition-colors"
+                >
+                  {theme === "dark" ? <Sun size={18} /> : <Moon size={18} />}
+                </button>
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => i18n.changeLanguage(i18n.language === "en" ? "es" : "en")}
+                    className="text-[10px] font-bold text-slate-500 hover:text-white uppercase"
+                  >
+                    {i18n.language}
+                  </button>
+                  {user ? (
+                    <LogOut 
+                      size={16} 
+                      className="text-slate-500 cursor-pointer hover:text-white" 
+                      onClick={handleLogout} 
+                    />
+                  ) : (
+                    <button 
+                      onClick={handleLogin}
+                      className="text-[10px] font-bold bg-white text-black px-4 py-1.5 rounded-lg hover:bg-emerald-400 transition-colors"
+                    >
+                      LOGIN
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.aside>
+        )}
+      </AnimatePresence>
+
+      {/* Main Content Area */}
+      <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
+        {user && onboardingStep !== "completed" ? (
+          <section className="flex-1 flex items-center justify-center p-8">
+            <Onboarding 
+              step={onboardingStep} 
+              onNext={(next) => setOnboardingStep(next)} 
+              onComplete={() => setOnboardingStep("completed")}
+            />
+          </section>
+        ) : (
+          <>
+            <header className="h-20 border-b border-black/5 dark:border-white/5 px-8 flex items-center justify-between backdrop-blur-md sticky top-0 z-40 bg-white/50 dark:bg-[#05070a]/50">
+              <div className="flex items-center gap-4">
+                <button 
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="lg:hidden p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                >
+                  {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+                </button>
+                <div>
+                  <h1 className="text-lg font-semibold text-slate-900 dark:text-white capitalize">{currentPage}</h1>
+                  <p className="text-xs text-slate-500">Poly-Crow Escrow Control Center</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                <div className="hidden md:flex items-center gap-3 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                  <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest">{t("balance")}</span>
+                  <span className="text-sm font-bold text-slate-900 dark:text-white">${profile?.balance || "0.00"}</span>
+                </div>
+                
+                <button 
+                  onClick={() => setIsNotifDrawerOpen(true)}
+                  className="relative p-2 text-slate-400 hover:text-white bg-white/5 border border-white/10 rounded-full transition-all hover:scale-110 active:scale-95"
+                >
+                  <Bell size={20} />
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full shadow-[0_0_8px_#10b981]" />
+                </button>
+              </div>
+            </header>
+
+            <section className="p-8 flex-1 max-w-7xl w-full mx-auto">
+              {renderPage()}
+            </section>
+
+            {/* Unified Notification & Chat Drawer */}
+            <AnimatePresence>
+              {isNotifDrawerOpen && (
+                <>
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setIsNotifDrawerOpen(false)}
+                    className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+                  />
+                  <motion.aside
+                    initial={{ x: "100%" }}
+                    animate={{ x: 0 }}
+                    exit={{ x: "100%" }}
+                    transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                    className="fixed top-0 right-0 z-[70] w-full max-w-md h-screen bg-white dark:bg-[#05070a]/90 backdrop-blur-3xl border-l border-black/5 dark:border-white/10 flex flex-col shadow-2xl"
+                  >
+                    <div className="p-6 border-b border-black/5 dark:border-white/5 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white">Activity Feed</h3>
+                        <p className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Secure Messages & Events</p>
+                      </div>
+                      <button onClick={() => setIsNotifDrawerOpen(false)} className="p-2 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                        <X size={24} />
+                      </button>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
+                       {/* Messages Section */}
+                       <div className="space-y-4">
+                        <h4 className="text-[10px] uppercase font-bold text-emerald-400 tracking-[0.2em]">Recent Chats</h4>
+                        {recentMessages.length > 0 ? recentMessages.map((msg) => (
+                          <GlassCard 
+                            key={msg.id} 
+                            className="p-4 bg-white/5 border-white/5 group cursor-pointer" 
+                            hover={true} 
+                            animate={false}
+                            onClick={() => {
+                              setSelectedAgreementId(msg.agreementId);
+                              setCurrentPage("detail");
+                              setIsNotifDrawerOpen(false);
+                            }}
+                          >
+                            <div className="flex gap-4">
+                              <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                                <MessageSquare size={16} className="text-emerald-600 dark:text-emerald-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex justify-between items-center mb-1">
+                                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[120px]">
+                                    {msg.senderId === user?.uid ? "You" : "Partner"}
+                                  </span>
+                                  <span className="text-[8px] text-slate-500">
+                                    {msg.timestamp?.toDate?.() ? msg.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 truncate">{msg.text}</p>
+                              </div>
+                            </div>
+                          </GlassCard>
+                        )) : (
+                          <p className="text-[10px] text-slate-500 text-center py-8 italic">No recent messages across your secure channels.</p>
+                        )}
+                      </div>
+
+                      <div className="w-full h-px bg-white/5" />
+
+                      {/* Notifications Section */}
+                       <div className="space-y-4">
+                        <h4 className="text-[10px] uppercase font-bold text-slate-500 tracking-[0.2em]">System Alerts</h4>
+                        {[
+                          { icon: ShieldCheck, text: "Escrow funds locked for #9921", color: "text-emerald-500 dark:text-emerald-400" },
+                          { icon: Bell, text: "New deal code received: PC-XT88", color: "text-blue-500 dark:text-blue-400" },
+                        ].map((notif, i) => (
+                          <div key={i} className="flex gap-4 items-start p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
+                            <notif.icon size={16} className={`${notif.color} mt-0.5`} />
+                            <p className="text-[11px] text-slate-600 dark:text-slate-300">{notif.text}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-6 border-t border-black/5 dark:border-white/5 bg-black/5 dark:bg-black/40">
+                      <button 
+                        onClick={() => { setIsNotifDrawerOpen(false); handleNavigate("dashboard"); }}
+                        className="w-full py-4 text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-widest border border-emerald-500/20 rounded-xl hover:bg-emerald-500/5 transition-all text-center"
+                      >
+                        View All Audit Logs
+                      </button>
+                    </div>
+                  </motion.aside>
+                </>
+              )}
+            </AnimatePresence>
+          </>
+        )}
+
+        {/* Liquid Glass Background Elements */}
+        <div className="fixed inset-0 pointer-events-none overflow-hidden z-[-1]">
+          <motion.div 
+            animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2] }}
+            transition={{ repeat: Infinity, duration: 15 }}
+            className="absolute -top-[100px] -left-[100px] w-[500px] h-[500px] bg-emerald-500/20 rounded-full blur-[120px]" 
+          />
+          <motion.div 
+            animate={{ scale: [1, 1.1, 1], opacity: [0.15, 0.25, 0.15] }}
+            transition={{ repeat: Infinity, duration: 12 }}
+            className="absolute -bottom-[100px] -right-[100px] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[150px]" 
+          />
+          <motion.div 
+            animate={{ scale: [1, 1.3, 1], opacity: [0.05, 0.1, 0.05] }}
+            transition={{ repeat: Infinity, duration: 20 }}
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px]" 
+          />
+        </div>
+      </main>
+    </div>
+  );
+}

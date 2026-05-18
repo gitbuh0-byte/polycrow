@@ -1,0 +1,226 @@
+import { useTranslation } from "react-i18next";
+import { GlassCard } from "../components/ui/GlassCard";
+import { Plus, Clock, Users, ArrowUpRight, TrendingUp, AlertTriangle, Trash2 } from "lucide-react";
+import { motion } from "motion/react";
+import { useState, useEffect } from "react";
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { useAuth } from "../context/AuthContext";
+import { formatAmount, getCurrencyData } from "../lib/currencyUtils";
+import { CountdownTimer } from "../components/ui/CountdownTimer";
+
+interface DashboardProps {
+  onSelectAgreement: (id: string) => void;
+  onCreateAgreement: () => void;
+}
+
+export default function Dashboard({ onSelectAgreement, onCreateAgreement }: DashboardProps) {
+  const { t } = useTranslation();
+  const { user } = useAuth();
+  const [agreements, setAgreements] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const calculateTargetDate = (agreement: any) => {
+    if (agreement.status === "pending" && agreement.createdAt) {
+      // Pending state expires in 10 minutes from creation
+      const createdAt = agreement.createdAt.toDate ? agreement.createdAt.toDate() : new Date(agreement.createdAt);
+      return new Date(createdAt.getTime() + 10 * 60 * 1000);
+    }
+    
+    // For active or other states, use the stored timerEnd
+    if (agreement.timerEnd) {
+      return new Date(agreement.timerEnd);
+    }
+
+    // Fallback mock
+    return new Date(Date.now() + 48 * 60 * 60000);
+  };
+
+  const handleDeleteDeal = async (id: string) => {
+    if (!id) return;
+    try {
+      await deleteDoc(doc(db, "agreements", id));
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return;
+    const q = query(
+      collection(db, "agreements"),
+      where("participants", "array-contains", user.uid)
+    );
+
+    const unsub = onSnapshot(q, (snapshot) => {
+      const agreementsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setAgreements(agreementsData);
+      setLoading(false);
+
+      // Auto-cleanup expired pending agreements
+      agreementsData.forEach(async (agreement: any) => {
+        if (agreement.status === "pending" && agreement.createdAt) {
+          const createdAt = agreement.createdAt.toDate ? agreement.createdAt.toDate() : new Date(agreement.createdAt);
+          const expiryTime = createdAt.getTime() + 10 * 60 * 1000;
+          if (Date.now() > expiryTime) {
+             console.log(`Auto-deleting expired pending agreement: ${agreement.id}`);
+             await deleteDoc(doc(db, "agreements", agreement.id));
+          }
+        }
+      });
+    }, (error) => {
+      console.error("Dashboard Snapshot error:", error);
+      setLoading(false);
+    });
+
+    return unsub;
+  }, [user]);
+
+  return (
+    <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white">{t("welcome")}</h2>
+        <p className="text-slate-500 dark:text-white/40 max-w-lg">Monitor your secure agreements and manage your high-stakes escrow participation in real-time.</p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <GlassCard className="flex flex-col gap-4 border-none bg-gradient-to-br from-emerald-500/20 to-blue-500/10">
+          <div className="flex justify-between items-start">
+            <div className="p-3 bg-emerald-500/20 rounded-2xl border border-emerald-500/30">
+              <TrendingUp className="text-emerald-600 dark:text-emerald-400" size={24} />
+            </div>
+            <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-600 dark:text-emerald-400 py-1 px-3 bg-emerald-500/10 rounded-full">Active Status</span>
+          </div>
+          <div>
+            <p className="text-xs font-bold text-emerald-600/60 dark:text-emerald-400/60 uppercase tracking-widest">{t("escrow_active")}</p>
+            <p className="text-4xl font-display font-bold text-slate-900 dark:text-white">$12,450.00</p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="flex flex-col gap-4 bg-white dark:bg-white/5 border-black/5 dark:border-white/5">
+          <div className="p-3 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10 w-fit">
+            <ArrowUpRight className="text-slate-500 dark:text-slate-400" size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest">Successful</p>
+            <p className="text-3xl font-display font-bold text-slate-900 dark:text-white">24</p>
+          </div>
+        </GlassCard>
+
+        <GlassCard className="flex flex-col gap-4 bg-white dark:bg-white/5 border-black/5 dark:border-white/5">
+          <div className="p-3 bg-red-500/10 rounded-2xl border border-red-500/20 w-fit">
+            <AlertTriangle className="text-red-500 dark:text-red-400" size={24} />
+          </div>
+          <div>
+            <p className="text-xs font-bold text-red-500 uppercase tracking-widest opacity-60">Slashed Stakes</p>
+            <p className="text-3xl font-display font-bold text-slate-900 dark:text-white">1</p>
+          </div>
+        </GlassCard>
+      </div>
+
+      {/* Recent Agreements Section */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <h3 className="text-2xl font-display font-bold text-slate-900 dark:text-white">{t("my_agreements")}</h3>
+          <button className="text-xs text-emerald-500 dark:text-emerald-400 font-bold uppercase tracking-widest flex items-center gap-2 hover:gap-3 transition-all">
+            View Audit Logs <ArrowUpRight size={14} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {loading ? (
+            Array(3).fill(0).map((_, i) => (
+              <GlassCard key={i} className="h-48 animate-pulse bg-white/5 rounded-[32px]" />
+            ))
+          ) : agreements.length === 0 ? (
+            <div className="col-span-full py-20 flex flex-col items-center gap-4 border-2 border-dashed border-white/5 rounded-[32px]">
+              <p className="text-slate-500 font-medium">No agreements found. Start one today.</p>
+              <button 
+                onClick={onCreateAgreement}
+                className="flex items-center gap-2 px-8 py-3 bg-emerald-500 text-black font-bold rounded-2xl shadow-lg shadow-emerald-500/20 active:scale-95 transition-all hover:bg-emerald-400"
+              >
+                <Plus size={20} /> {t("create_agreement")}
+              </button>
+            </div>
+          ) : agreements.map((agreement) => (
+            <GlassCard 
+              key={agreement.id} 
+              className="group cursor-pointer bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 rounded-[32px] p-8 border border-black/5 dark:border-white/5"
+              onClick={() => onSelectAgreement(agreement.id)}
+            >
+              <div className="flex flex-col gap-6">
+                <div className="flex justify-between items-start">
+                  <span className={`text-[10px] uppercase tracking-[0.2em] font-bold px-3 py-1 rounded-full border ${
+                    agreement.status === "active" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" :
+                    agreement.status === "pending" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" :
+                    "bg-black/5 dark:bg-white/5 text-slate-600 dark:text-slate-500 border-black/5 dark:border-white/10"
+                  }`}>
+                    {agreement.status}
+                  </span>
+                  <div className="flex -space-x-2">
+                    {agreement.participants.map((p: string, i: number) => (
+                      <div key={i} className="w-8 h-8 rounded-full bg-slate-700 border-2 border-[#05070a] flex items-center justify-center text-[10px] font-bold text-slate-300">
+                        {p.substring(0, 1).toUpperCase()}
+                      </div>
+                    ))}
+                    {!agreement.isFunded?.[user?.uid] && agreement.status === "pending" && (
+                      <div className="w-8 h-8 rounded-full bg-rose-500/20 border-2 border-[#05070a] flex items-center justify-center text-[10px] font-bold text-rose-500 animate-pulse">
+                        $!
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-lg font-bold group-hover:text-emerald-500 dark:group-hover:text-emerald-400 transition-colors truncate text-slate-900 dark:text-white">{agreement.title}</h4>
+                    {agreement.createdBy === user?.uid && (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if(confirm("Are you sure you want to delete this deal? Stakes will be returned if not active.")) {
+                            handleDeleteDeal(agreement.id);
+                          }
+                        }}
+                        className="p-2 text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-500 line-clamp-1">{agreement.description}</p>
+                  
+                  <div className="mt-4 flex items-center gap-3">
+                    <div className="flex-1 h-1 bg-black/5 dark:bg-white/5 rounded-full overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-1000 ${agreement.status === "active" ? "w-full bg-emerald-500" : "w-1/2 bg-blue-500 animate-pulse"}`} 
+                      />
+                    </div>
+                    <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                      {agreement.status === "active" ? "FULLY FUNDED" : "AWAITING DEPOSITS"}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-end pt-4 border-t border-black/5 dark:border-white/5">
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-500 uppercase font-bold tracking-widest">{t("stakes")}</span>
+                    <span className="text-2xl font-display font-bold text-slate-900 dark:text-white">
+                      {formatAmount(agreement.stakes, agreement.currency || "USD")}
+                    </span>
+                  </div>
+                  <CountdownTimer 
+                    variant="compact" 
+                    targetDate={calculateTargetDate(agreement)}
+                    onExpire={agreement.status === "pending" ? () => handleDeleteDeal(agreement.id) : undefined}
+                  />
+                </div>
+              </div>
+            </GlassCard>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
