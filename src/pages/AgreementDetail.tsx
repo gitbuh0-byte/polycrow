@@ -100,7 +100,14 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
     let response;
     switch (gateway.id) {
       case "MPESA":
-        response = await initiateMpesaPush(user.email, agreement.stakes); 
+        {
+          const phoneNumber = profile?.phoneNumber || user.phoneNumber || "";
+          if (!phoneNumber) {
+            alert("Add your M-Pesa phone number in Profile before funding this agreement.");
+            return false;
+          }
+          response = await initiateMpesaPush(phoneNumber, Math.ceil(Number(agreement.stakes)));
+        }
         break;
       case "AIRTEL":
         response = await initiateAirtelMoney(user.email, agreement.stakes);

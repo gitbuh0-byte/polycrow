@@ -6,17 +6,37 @@ export interface PaymentGatewayResponse {
 }
 
 export async function initiateMpesaPush(phoneNumber: string, amount: number): Promise<PaymentGatewayResponse> {
-  console.log(`Initiating M-Pesa STK Push for ${phoneNumber} - Amount: ${amount}`);
-  // Simulated delay
-  await new Promise(resolve => setTimeout(resolve, 2000));
-  
-  // Random success
-  const success = Math.random() > 0.2;
-  return {
-    success,
-    transactionId: success ? "MPESA_" + Math.random().toString(36).substring(7).toUpperCase() : undefined,
-    error: success ? undefined : "User cancelled the request or timeout."
-  };
+  try {
+    const response = await fetch("/api/mpesa/stkpush", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phoneNumber, amount })
+    });
+    const data = await response.json();
+    if (!response.ok || data.success !== true || !data.checkoutRequestId) {
+      return { success: false, error: data.error || data.ResponseDescription || "M-Pesa rejected the request." };
+    }
+
+    for (let attempt = 0; attempt < 20; attempt += 1) {
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      const statusResponse = await fetch("/api/mpesa/status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checkoutRequestId: data.checkoutRequestId })
+      });
+      const status = await statusResponse.json();
+      if (status.success === true) return { success: true, transactionId: data.checkoutRequestId };
+      if (status.pending !== true) return { success: false, transactionId: data.checkoutRequestId, error: status.error || "M-Pesa payment was not completed." };
+    }
+
+    return {
+      success: false,
+      transactionId: data.checkoutRequestId,
+      error: "M-Pesa payment timed out. Check your phone and try again."
+    };
+  } catch {
+    return { success: false, error: "Unable to reach the M-Pesa service." };
+  }
 }
 
 export async function initiateAirtelMoney(phoneNumber: string, amount: number): Promise<PaymentGatewayResponse> {

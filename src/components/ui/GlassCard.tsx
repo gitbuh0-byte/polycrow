@@ -25,7 +25,7 @@ export function GlassCard({ children, className, hover = true, animate = true }:
       animate={animate ? { opacity: 1, y: 0 } : undefined}
       transition={{ duration: 0.5, ease: "easeOut" }}
       className={cn(
-        "liquid-glass p-6 rounded-3xl",
+        "liquid-glass p-6",
         hover && "glass-hover",
         className
       )}

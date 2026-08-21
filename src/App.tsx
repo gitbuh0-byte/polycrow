@@ -274,27 +274,33 @@ export default function App() {
             animate={{ x: 0 }}
             exit={{ x: -300 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed lg:relative z-50 w-72 h-screen p-6 flex flex-col gap-8 bg-white/5 lg:bg-transparent backdrop-blur-3xl border-r border-black/5 dark:border-white/10"
+            className="mobile-sidebar fixed lg:relative z-50 w-[min(84vw,20rem)] h-screen p-5 lg:p-6 flex flex-col gap-7 bg-[#f8fafc]/95 dark:bg-[#081016]/95 lg:bg-transparent backdrop-blur-3xl border-r border-black/5 dark:border-white/10 shadow-[18px_0_50px_rgba(2,6,23,0.22)] lg:shadow-none"
           >
-            <div className="flex items-center justify-between px-2">
+            <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-3">
                 <img src="/logo.png" alt="Poly-Crow Logo" className="w-10 h-10 object-contain brightness-125 drop-shadow-[0_0_10px_rgba(92,255,239,0.85)]" />
                 <h1 className="text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
               </div>
               <button 
                 onClick={() => setIsSidebarOpen(false)}
-                className="lg:hidden p-2 text-slate-500 hover:text-white"
+                className="lg:hidden w-10 h-10 rounded-[10px] border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center justify-center"
+                aria-label="Close navigation menu"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <nav className="flex-1 flex flex-col gap-2">
+            <div className="lg:hidden px-1">
+              <p className="text-[10px] font-bold uppercase tracking-[0.24em] text-emerald-500 dark:text-emerald-400">Control center</p>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Move through your secure workspace.</p>
+            </div>
+
+            <nav className="flex-1 flex flex-col gap-2" aria-label="Main navigation">
               {navItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleNavigate(item.id)}
-                  className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ${
+                  className={`flex items-center gap-4 px-4 py-3 rounded-[10px] transition-all duration-300 ${
                     currentPage === item.id 
                     ? "bg-white/10 text-emerald-500 dark:text-emerald-400 border border-white/10 shadow-lg" 
                     : "text-slate-500 dark:text-slate-400 hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
@@ -375,9 +381,12 @@ export default function App() {
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="lg:hidden p-2 text-slate-400 hover:text-slate-900 dark:hover:text-white"
+                  className="mobile-menu-trigger lg:hidden h-11 min-w-11 px-3 rounded-[10px] border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(16,185,129,0.12)]"
+                  aria-label={isSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                  aria-expanded={isSidebarOpen}
                 >
                   {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+                  <span className="sr-only">Menu</span>
                 </button>
                 <div>
                   <h1 className="text-lg font-semibold text-slate-900 dark:text-white capitalize">{currentPage}</h1>

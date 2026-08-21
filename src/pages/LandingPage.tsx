@@ -14,6 +14,8 @@ import {
   Shield,
   Eye,
   Key
+  ,Menu
+  ,X
 } from "lucide-react";
 import { GlassCard } from "../components/ui/GlassCard";
 import { useTheme } from "../context/ThemeContext";
@@ -57,6 +59,7 @@ function FlipLetters({ text, className, letterClassName }: { text: string; class
 
 export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPageProps) {
   const { theme, toggleTheme } = useTheme();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const { scrollYProgress } = useScroll();
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -140]);
   const backgroundScale = useTransform(scrollYProgress, [0, 0.6, 1], [1, 1.08, 1.16]);
@@ -89,12 +92,12 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
 
       {/* Navigation */}
       <motion.nav
-        className="sticky top-0 z-40 flex items-center justify-between px-8 py-6 max-w-7xl mx-auto"
+        className="sticky top-0 z-40 flex items-center justify-between px-4 sm:px-8 py-4 sm:py-6 max-w-7xl mx-auto"
         style={{ backdropFilter: navBackdropFilter }}
       >
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="Logo" className="w-10 h-10 object-contain brightness-125 drop-shadow-[0_0_10px_rgba(92,255,239,0.85)]" />
-          <h1 className="text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
+          <img src="/logo.png" alt="Logo" className="w-8 h-8 sm:w-10 sm:h-10 object-contain brightness-125 drop-shadow-[0_0_10px_rgba(92,255,239,0.85)]" />
+          <h1 className="text-lg sm:text-xl font-display font-bold tracking-tight text-slate-900 dark:text-white">poly-crow</h1>
         </div>
         <div className="hidden md:flex items-center gap-8">
           <a href="#features" className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-white transition-colors">Features</a>
@@ -102,7 +105,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
           <a href="#network" className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-emerald-500 dark:hover:text-white transition-colors">Network</a>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
           <button 
             onClick={toggleTheme}
             className="poly-button-secondary p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
@@ -111,23 +114,42 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
             {theme === "dark" ? <Sun size={20} /> : <Moon size={20} />}
           </button>
           
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden poly-button-secondary w-10 h-10 p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={isMobileMenuOpen}
+          >
+            {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+
           <button 
             onClick={onLogin}
-            className="poly-button-primary px-6 py-2 text-sm"
+            className="poly-button-primary hidden sm:inline-flex px-6 py-2 text-sm"
           >
             <span className="relative z-10">Get Started</span>
           </button>
         </div>
+        {isMobileMenuOpen && (
+          <div className="absolute left-4 right-4 top-[calc(100%-0.25rem)] md:hidden p-3 rounded-[10px] border border-white/10 bg-[#081016]/95 backdrop-blur-2xl shadow-2xl">
+            <div className="flex flex-col gap-1">
+              {[['#features', 'Features'], ['#security', 'Security'], ['#network', 'Network']].map(([href, label]) => (
+                <a key={href} href={href} onClick={() => setIsMobileMenuOpen(false)} className="rounded-[10px] px-4 py-3 text-sm font-medium text-slate-300 hover:bg-white/10 hover:text-emerald-400">{label}</a>
+              ))}
+              <button onClick={onLogin} className="poly-button-primary mt-1 w-full px-4 py-3 text-sm">Get Started</button>
+            </div>
+          </div>
+        )}
       </motion.nav>
 
       {/* Hero Section */}
-      <motion.section className="relative z-10 pt-32 pb-20 px-8 max-w-7xl mx-auto text-center" style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}>
+      <motion.section className="relative z-10 pt-20 sm:pt-32 pb-16 sm:pb-20 px-4 sm:px-8 max-w-7xl mx-auto text-center" style={{ y: heroY, opacity: heroOpacity, scale: heroScale }}>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="hero-flip-group text-6xl md:text-8xl font-display font-bold tracking-tight mb-8 leading-[0.9] [perspective:1000px]">
+          <h1 className="hero-flip-group text-4xl sm:text-6xl md:text-8xl font-display font-bold tracking-tight mb-8 leading-[0.95] [perspective:1000px]">
             {heroLines.map((line, lineIndex) => (
               <motion.span
                 key={line.text}
@@ -141,7 +163,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
               </motion.span>
             ))}
           </h1>
-          <p className="text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p className="text-base sm:text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
             Stop worrying about who you're dealing with. Poly-Crow holds funds in a digital vault and only releases them when both parties are happy. Simple, safe, and smart.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
