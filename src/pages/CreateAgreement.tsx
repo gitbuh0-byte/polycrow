@@ -40,6 +40,10 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user || !profile) return;
+    if (!profile.kycVerified) {
+      alert("Verify your account before creating a deal.");
+      return;
+    }
     setLoading(true);
     
     try {

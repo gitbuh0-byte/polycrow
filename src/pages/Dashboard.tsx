@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { GlassCard } from "../components/ui/GlassCard";
-import { Plus, Clock, Users, ArrowUpRight, TrendingUp, AlertTriangle, Trash2, MessageCircle, User as UserIcon } from "lucide-react";
+import { Plus, Clock, Users, ArrowUpRight, TrendingUp, AlertTriangle, Trash2, MessageCircle, User as UserIcon, ShieldCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
 import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, or, updateDoc, serverTimestamp } from "firebase/firestore";
@@ -13,11 +13,12 @@ import { getUSDExchangeRates, ExchangeRates, convertToUSD } from "../lib/marketR
 interface DashboardProps {
   onSelectAgreement: (id: string) => void;
   onCreateAgreement: () => void;
+  onVerifyAccount: () => void;
 }
 
-export default function Dashboard({ onSelectAgreement, onCreateAgreement }: DashboardProps) {
+export default function Dashboard({ onSelectAgreement, onCreateAgreement, onVerifyAccount }: DashboardProps) {
   const { t } = useTranslation();
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [agreements, setAgreements] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [rates, setRates] = useState<ExchangeRates | null>(null);
@@ -103,6 +104,23 @@ export default function Dashboard({ onSelectAgreement, onCreateAgreement }: Dash
         <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white">{t("welcome")}</h2>
         <p className="text-slate-500 dark:text-white/40 max-w-lg">Monitor your secure agreements and manage your high-stakes escrow participation in real-time.</p>
       </div>
+
+      {!profile?.kycVerified && (
+        <GlassCard className="flex flex-col sm:flex-row sm:items-center justify-between gap-5 border-emerald-500/20 bg-emerald-500/5">
+          <div className="flex items-start gap-4">
+            <div className="p-3 rounded-[10px] bg-emerald-500/10 text-emerald-500">
+              <ShieldCheck size={22} />
+            </div>
+            <div>
+              <h3 className="font-bold text-slate-900 dark:text-white">Verify your account</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Complete verification before creating or funding deals.</p>
+            </div>
+          </div>
+          <button onClick={onVerifyAccount} className="poly-button-primary px-5 py-3 text-xs uppercase tracking-widest whitespace-nowrap">
+            Verify account <ArrowUpRight size={15} />
+          </button>
+        </GlassCard>
+      )}
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

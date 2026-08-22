@@ -93,6 +93,14 @@ export default function App() {
     setIsSidebarOpen(false);
   };
 
+  const handleCreateAgreement = () => {
+    if (!profile?.kycVerified) {
+      handleNavigate("verify");
+      return;
+    }
+    handleNavigate("create");
+  };
+
   const handleLogin = async () => {
     if (!firebaseAvailable) {
       alert("Firebase is not configured. Set VITE_FIREBASE_API_KEY to enable login.");
@@ -237,7 +245,8 @@ export default function App() {
       case "dashboard": return (
         <Dashboard 
           onSelectAgreement={(id) => { setSelectedAgreementId(id); handleNavigate("detail"); }} 
-          onCreateAgreement={() => handleNavigate("create")}
+          onCreateAgreement={handleCreateAgreement}
+          onVerifyAccount={() => handleNavigate("verify")}
         />
       );
       case "wallet": return <Wallet />;
@@ -247,7 +256,8 @@ export default function App() {
       default: return (
         <Dashboard 
           onSelectAgreement={() => {}} 
-          onCreateAgreement={() => handleNavigate("create")}
+          onCreateAgreement={handleCreateAgreement}
+          onVerifyAccount={() => handleNavigate("verify")}
         />
       );
     }
@@ -299,7 +309,7 @@ export default function App() {
               {navItems.map((item) => (
                 <button
                   key={item.id}
-                  onClick={() => handleNavigate(item.id)}
+                  onClick={() => item.id === "create" ? handleCreateAgreement() : handleNavigate(item.id)}
                   className={`flex items-center gap-4 px-4 py-3 rounded-[10px] transition-all duration-300 ${
                     currentPage === item.id 
                     ? "bg-white/10 text-emerald-500 dark:text-emerald-400 border border-white/10 shadow-lg" 
@@ -365,13 +375,16 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
-        {user && onboardingStep !== "completed" ? (
+        {user && currentPage === "verify" ? (
           <section className="flex-1 flex items-center justify-center p-8">
             <Suspense fallback={<LoadingSurface />}>
               <Onboarding 
                 step={onboardingStep} 
                 onNext={(next) => setOnboardingStep(next)} 
-                onComplete={() => setOnboardingStep("completed")}
+                onComplete={() => {
+                  setOnboardingStep("completed");
+                  setCurrentPage("dashboard");
+                }}
               />
             </Suspense>
           </section>
