@@ -128,7 +128,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
       alert(isInvited ? "Welcome to the agreement! Your stake has been locked." : "Stake locked. Waiting for partner.");
     } catch (e) {
       console.error(e);
-      alert("Failed to update agreement state.");
+      alert(e instanceof Error ? e.message : "Failed to update agreement state.");
     } finally {
       setLoading(false);
     }
@@ -187,6 +187,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
   const isCurrentUserParticipant = agreement.participants?.includes(user?.uid);
   const currentUserFunded = agreement.isFunded?.[user?.uid] === true;
   const participantCount = agreement.participants?.length || 0;
+  const isCreator = agreement.createdBy === user?.uid;
 
   return (
     <div className="flex flex-col gap-5 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -255,6 +256,20 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                 <span className="mt-2 block text-sm font-bold text-slate-900 dark:text-white">{isCurrentUserParticipant ? (currentUserFunded ? "Joined and funded" : "Joined, funding required") : isInvitedUser ? "Invited participant, ready to join" : `Invited: ${invitedEmail}`}</span>
               </div>
             </div>
+
+            {agreement.status === "pending" && isCreator && !isInvitedUser && (
+              <div className="rounded-2xl border border-blue-500/25 bg-blue-500/10 p-4 text-sm text-blue-600 dark:text-blue-300">
+                <strong className="block uppercase tracking-widest text-[10px]">Waiting for collaborator</strong>
+                <span className="mt-2 block">The invited participant must open the link while signed in as <b>{invitedEmail}</b>, then click <b>Participate and lock my stake</b> for {formatAmount(agreement.stakes, currency)}.</span>
+              </div>
+            )}
+
+            {agreement.status === "pending" && isInvitedUser && !currentUserFunded && (
+              <div className="rounded-2xl border-2 border-emerald-500/40 bg-emerald-500/10 p-5 shadow-lg shadow-emerald-500/10">
+                <strong className="block text-emerald-600 dark:text-emerald-400 uppercase tracking-widest text-xs">You are the invited collaborator</strong>
+                <span className="mt-2 block text-sm text-slate-600 dark:text-slate-300">Click the button below to join this deal and lock exactly {formatAmount(agreement.stakes, currency)} from your wallet.</span>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {!currentUserFunded && agreement.status === "pending" ? (
