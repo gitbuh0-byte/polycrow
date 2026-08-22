@@ -165,7 +165,9 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
         timestamp: serverTimestamp()
       });
 
-      const isInvited = !agreement.participants.includes(user.uid) && agreement.invitedParticipants?.includes(user.email);
+      const normalizedEmail = user.email?.trim().toLowerCase();
+      const isInvited = !agreement.participants.includes(user.uid)
+        && Boolean(normalizedEmail && agreement.invitedParticipants?.some((email: string) => email.trim().toLowerCase() === normalizedEmail));
       const updatedFunded = { ...agreement.isFunded, [user.uid]: true };
       
       let participants = [...agreement.participants];

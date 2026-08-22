@@ -88,7 +88,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
         currency: form.currency,
         dealCode: generateDealCode(),
         participants: [user.uid], // Initially only creator
-        invitedParticipants: [form.participantEmail],
+        invitedParticipants: [form.participantEmail.trim().toLowerCase()],
         status: "pending",
         isFunded: { [user.uid]: true }, // Creator funded it
         timerEnd: expirationDate.toISOString(),

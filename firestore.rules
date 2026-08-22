@@ -32,6 +32,12 @@ service cloud.firestore {
       return resource.data;
     }
 
+    function isInvitedToAgreement() {
+      return isSignedIn()
+        && request.auth.token.email != null
+        && request.auth.token.email.lower() in existing().get('invitedParticipants', []);
+    }
+
     // --- Entity Validations ---
 
     function isValidUser(data) {
@@ -115,7 +121,10 @@ service cloud.firestore {
       
       allow update: if isSignedIn() && (
         (request.auth.uid in resource.data.participants) ||
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants'])) ||
+        (isInvitedToAgreement()
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'isFunded', 'status'])
+          && request.auth.uid in request.resource.data.participants
+          && request.resource.data.isFunded.get(request.auth.uid, false) == true) ||
         isAdmin()
       );
 
