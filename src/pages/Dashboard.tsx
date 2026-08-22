@@ -52,6 +52,7 @@ export default function Dashboard({ onSelectAgreement, onCreateAgreement, onVeri
     if (!user) return;
     
     getUSDExchangeRates().then(setRates);
+    const loadingTimeout = window.setTimeout(() => setLoading(false), 5000);
 
     const q = query(
       collection(db, "agreements"),
@@ -65,6 +66,7 @@ export default function Dashboard({ onSelectAgreement, onCreateAgreement, onVeri
       const agreementsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setAgreements(agreementsData);
       setLoading(false);
+      window.clearTimeout(loadingTimeout);
 
       // Auto-cleanup expired agreements
       agreementsData.forEach(async (agreement: any) => {
@@ -85,9 +87,13 @@ export default function Dashboard({ onSelectAgreement, onCreateAgreement, onVeri
     }, (error) => {
       console.error("Dashboard Snapshot error:", error);
       setLoading(false);
+      window.clearTimeout(loadingTimeout);
     });
 
-    return unsub;
+    return () => {
+      window.clearTimeout(loadingTimeout);
+      unsub();
+    };
   }, [user]);
 
   const stats = {
