@@ -173,7 +173,11 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
             >
               <span className="relative z-10 flex items-center gap-2">Start Your First Deal <ChevronRight size={20} /></span>
             </button>
-            <button className="poly-button-secondary w-full sm:w-auto px-8 py-4">
+            <button
+              type="button"
+              onClick={() => document.getElementById("features")?.scrollIntoView({ behavior: "smooth" })}
+              className="poly-button-secondary w-full sm:w-auto px-8 py-4"
+            >
               <span className="relative z-10">How it works</span>
             </button>
           </div>
