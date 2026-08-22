@@ -1,18 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { GlassCard } from "../components/ui/GlassCard";
-import { 
-  Smartphone,
-  ArrowLeft, 
-  Clock, 
-  ShieldAlert, 
-  CheckCircle2, 
-  MessageSquare, 
-  Send, 
-  Users,
-  Timer,
-  DollarSign,
-  Bitcoin
-} from "lucide-react";
+import { Smartphone, ArrowLeft, ShieldAlert, CheckCircle2, Send, Users } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { 
   doc, 
@@ -23,16 +11,13 @@ import {
   orderBy, 
   serverTimestamp, 
   updateDoc,
-  arrayUnion,
-  deleteDoc,
   increment,
   runTransaction
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
-import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
-import { formatAmount, getCurrencyData, gateways, CurrencyMark } from "../lib/currencyUtils";
+import { formatAmount, getCurrencyData, CurrencyMark } from "../lib/currencyUtils";
 import { CountdownTimer } from "../components/ui/CountdownTimer";
 
 interface AgreementDetailProps {
@@ -88,9 +73,9 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
     
     // Check balance first
     const cid = agreement.currency || "USD";
-    const currentBalance = Math.max(0, (profile.balances?.[cid] || 0)
-      + (cid === "USD" ? profile.balance || 0 : 0)
-      + (cid === "BTC" ? profile.balanceCrypto || 0 : 0));
+    const storedBalance = Number(profile.balances?.[cid] || 0);
+    const legacyBalance = cid === "USD" ? Number(profile.balance || 0) : cid === "BTC" ? Number(profile.balanceCrypto || 0) : 0;
+    const currentBalance = Math.max(0, storedBalance, legacyBalance);
     const stakes = parseFloat(agreement.stakes);
 
     if (currentBalance < (stakes - 0.00000001)) {
@@ -100,15 +85,36 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
     }
 
     try {
-      // Deduct balance
-      const updateData: any = {
-        [`balances.${cid}`]: increment(-stakes)
-      };
-      if (cid === "USD") updateData.balance = increment(-stakes);
-      if (cid === "BTC") updateData.balanceCrypto = increment(-stakes);
-      await updateDoc(doc(db, "users", user.uid), updateData);
+      const normalizedEmail = user.email?.trim().toLowerCase();
+      const isInvited = !agreement.participants.includes(user.uid)
+        && Boolean(normalizedEmail && agreement.invitedParticipants?.some((email: string) => email.trim().toLowerCase() === normalizedEmail));
+      await runTransaction(db, async (transaction) => {
+        const agreementRef = doc(db, "agreements", agreement.id);
+        const userRef = doc(db, "users", user.uid);
+        const agreementSnapshot = await transaction.get(agreementRef);
+        const current = agreementSnapshot.data();
+        if (!current || current.status !== "pending") throw new Error("This agreement is no longer accepting funding.");
 
-      // Add transaction record
+        const currentParticipants = [...(current.participants || [])];
+        const currentIsInvited = !currentParticipants.includes(user.uid)
+          && Boolean(normalizedEmail && current.invitedParticipants?.some((email: string) => email.trim().toLowerCase() === normalizedEmail));
+        if (!currentParticipants.includes(user.uid) && !currentIsInvited) throw new Error("You are not invited to this agreement.");
+        if (current.isFunded?.[user.uid] === true) throw new Error("Your stake is already funded.");
+        if (currentIsInvited) currentParticipants.push(user.uid);
+
+        const funded = { ...(current.isFunded || {}), [user.uid]: true };
+        const isFullyFunded = currentParticipants.length >= 2 && currentParticipants.every((uid: string) => funded[uid] === true);
+        const updateData: any = { [`balances.${cid}`]: increment(-stakes) };
+        if (cid === "USD") updateData.balance = increment(-stakes);
+        if (cid === "BTC") updateData.balanceCrypto = increment(-stakes);
+        transaction.update(userRef, updateData);
+        transaction.update(agreementRef, {
+          participants: currentParticipants,
+          isFunded: funded,
+          status: isFullyFunded ? "active" : "pending"
+        });
+      });
+
       await addDoc(collection(db, "transactions"), {
         userId: user.uid,
         type: "escrow_lock",
@@ -117,23 +123,6 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
         agreementId: agreement.id,
         status: "completed",
         timestamp: serverTimestamp()
-      });
-
-      const normalizedEmail = user.email?.trim().toLowerCase();
-      const isInvited = !agreement.participants.includes(user.uid)
-        && Boolean(normalizedEmail && agreement.invitedParticipants?.some((email: string) => email.trim().toLowerCase() === normalizedEmail));
-      const updatedFunded = { ...agreement.isFunded, [user.uid]: true };
-      
-      let participants = [...agreement.participants];
-      if (isInvited) participants.push(user.uid);
-
-      const isFullyFunded = participants.length >= 2 && 
-                           participants.every((uid: string) => updatedFunded[uid]);
-
-      await updateDoc(doc(db, "agreements", agreement.id), {
-        participants: isInvited ? arrayUnion(user.uid) : agreement.participants,
-        [`isFunded.${user.uid}`]: true,
-        status: isFullyFunded ? "active" : "pending"
       });
       
       alert(isInvited ? "Welcome to the agreement! Your stake has been locked." : "Stake locked. Waiting for partner.");
@@ -191,6 +180,12 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
 
   if (!agreement) return null;
 
+  const currency = agreement.currency || "USD";
+  const invitedEmail = agreement.invitedParticipants?.[0] || "No participant invited";
+  const isCurrentUserParticipant = agreement.participants?.includes(user?.uid);
+  const currentUserFunded = agreement.isFunded?.[user?.uid] === true;
+  const participantCount = agreement.participants?.length || 0;
+
   return (
     <div className="flex flex-col gap-5 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -218,7 +213,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-500">
                   <div className="flex items-center gap-1">
                     <Users size={14} />
-                    <span className="text-xs">{agreement.participants.length} Participants</span>
+                    <span className="text-xs">{participantCount}/2 Participants</span>
                   </div>
                   <div className="w-1 h-1 bg-black/10 dark:bg-white/20 rounded-full" />
                   <span className="text-xs">Audit ID: #{agreement.id.substring(0, 8)}</span>
@@ -248,8 +243,19 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
               )}
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4">
+                <span className="text-[9px] uppercase font-bold tracking-widest text-emerald-500">Amount required per participant</span>
+                <strong className="mt-2 block text-xl text-slate-900 dark:text-white">{formatAmount(agreement.stakes, currency)}</strong>
+              </div>
+              <div className="rounded-2xl border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 p-4">
+                <span className="text-[9px] uppercase font-bold tracking-widest text-slate-500">Participant status</span>
+                <span className="mt-2 block text-sm font-bold text-slate-900 dark:text-white">{isCurrentUserParticipant ? (currentUserFunded ? "Joined and funded" : "Joined, funding required") : `Invited: ${invitedEmail}`}</span>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
-              {!agreement.isFunded?.[user?.uid] && agreement.status === "pending" ? (
+              {!currentUserFunded && agreement.status === "pending" ? (
                 <button 
                   onClick={handleFundEscrow}
                   disabled={loading}
@@ -258,8 +264,8 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                   {loading ? "Processing Secure Gateway..." : (
                     <>
                       <Smartphone size={24} /> 
-                      {agreement.participants.includes(user?.uid) ? "Lock My Stake" : "Join & Fund Escrow"} 
-                      ({formatAmount(agreement.stakes, agreement.currency || "USD")})
+                      {isCurrentUserParticipant ? "Approve and lock my stake" : "Join and fund deal"}
+                      ({formatAmount(agreement.stakes, currency)})
                     </>
                   )}
                 </button>
