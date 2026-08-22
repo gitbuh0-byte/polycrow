@@ -1,5 +1,5 @@
 import React from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useScroll, useTransform } from "framer-motion";
 import { 
   ShieldCheck, 
   Lock, 
@@ -35,9 +35,11 @@ const orbitNodes = [
 ];
 
 const revealTransition = { duration: 0.8, ease: [0.22, 1, 0.36, 1] };
-const heroLines = [
-  { text: "SECURE DEALS", className: "text-slate-900 dark:text-white", letterClassName: "" },
-  { text: "YOU CAN TRUST", className: "", letterClassName: "text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600 dark:from-emerald-400 dark:to-blue-500" },
+const rotatingHeroLines = [
+  "YOU CAN TRUST",
+  "MOVE WITH CONFIDENCE",
+  "TRADE WITHOUT FEAR",
+  "SETTLE WITH CLARITY",
 ];
 
 function FlipLetters({ text, className, letterClassName }: { text: string; className?: string; letterClassName?: string }) {
@@ -60,6 +62,7 @@ function FlipLetters({ text, className, letterClassName }: { text: string; class
 export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPageProps) {
   const { theme, toggleTheme } = useTheme();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [heroLineIndex, setHeroLineIndex] = React.useState(0);
   const { scrollYProgress } = useScroll();
   const backgroundY = useTransform(scrollYProgress, [0, 1], [0, -140]);
   const backgroundScale = useTransform(scrollYProgress, [0, 0.6, 1], [1, 1.08, 1.16]);
@@ -69,6 +72,13 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
   const navBlur = useTransform(scrollYProgress, [0, 0.08], [0, 18]);
   const navBackdropFilter = useTransform(navBlur, (value) => `blur(${value}px)`);
   const progressScaleX = useTransform(scrollYProgress, [0, 1], [0, 1]);
+
+  React.useEffect(() => {
+    const interval = window.setInterval(() => {
+      setHeroLineIndex((index) => (index + 1) % rotatingHeroLines.length);
+    }, 3200);
+    return () => window.clearInterval(interval);
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#f8fafc] dark:bg-[#05070a] text-slate-900 dark:text-white relative overflow-x-hidden transition-colors duration-500">
@@ -149,19 +159,27 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.8 }}
         >
-          <h1 className="hero-flip-group text-4xl sm:text-6xl md:text-8xl font-display font-bold tracking-tight mb-8 leading-[0.95] [perspective:1000px]">
-            {heroLines.map((line, lineIndex) => (
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-display font-bold tracking-tight mb-8 leading-[0.95]">
+            <motion.span
+              className="block text-slate-900 dark:text-white"
+              initial={{ opacity: 0, y: 18 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={revealTransition}
+            >
+              SECURE DEALS
+            </motion.span>
+            <AnimatePresence mode="wait">
               <motion.span
-                key={line.text}
-                className="block"
-                initial={{ opacity: 0, rotateX: lineIndex === 0 ? 72 : -72, y: 18 }}
-                animate={{ opacity: 1, rotateX: 0, y: 0 }}
-                transition={{ ...revealTransition, delay: lineIndex * 0.12 }}
-                style={{ transformStyle: "preserve-3d" }}
+                key={rotatingHeroLines[heroLineIndex]}
+                className="block text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-blue-600 dark:from-emerald-400 dark:to-blue-500"
+                initial={{ opacity: 0, y: 18 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -18 }}
+                transition={{ duration: 0.45, ease: "easeOut" }}
               >
-                <FlipLetters text={line.text} className={line.className} letterClassName={line.letterClassName} />
+                {rotatingHeroLines[heroLineIndex]}
               </motion.span>
-            ))}
+            </AnimatePresence>
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mb-8 sm:mb-10 leading-relaxed">
             Stop worrying about who you're dealing with. Poly-Crow holds funds in a digital vault and only releases them when both parties are happy. Simple, safe, and smart.
