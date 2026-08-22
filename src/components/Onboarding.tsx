@@ -15,10 +15,14 @@ interface OnboardingProps {
 export default function Onboarding({ step, onBack, onComplete }: OnboardingProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [selectedDocument, setSelectedDocument] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState<"id" | "passport" | "licence">("id");
+  const [frontDocument, setFrontDocument] = useState<File | null>(null);
+  const [backDocument, setBackDocument] = useState<File | null>(null);
+  const [singleDocument, setSingleDocument] = useState<File | null>(null);
 
   const handleKycSubmit = async () => {
-    if (!user || !firebaseAvailable || !selectedDocument) return;
+    const hasRequiredDocuments = documentType === "id" ? frontDocument && backDocument : singleDocument;
+    if (!user || !firebaseAvailable || !hasRequiredDocuments) return;
     setLoading(true);
     try {
       const saveVerification = setDoc(doc(db, "users", user.uid), {
@@ -65,26 +69,52 @@ export default function Onboarding({ step, onBack, onComplete }: OnboardingProps
               </div>
             </div>
 
-            <label htmlFor="government-document" className="p-6 sm:p-8 border-2 border-dashed border-white/10 rounded-[10px] flex flex-col items-center gap-3 cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group text-center">
-                <div className="w-12 h-12 rounded-[10px] bg-white/5 flex items-center justify-center group-hover:scale-105 transition-transform">
-                  <Key size={24} className="text-slate-500 group-hover:text-emerald-400" />
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-bold text-white break-all">{selectedDocument ? selectedDocument.name : "Choose government ID"}</p>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">PDF, passport, national ID, or driving licence</p>
-                </div>
-                <input
-                  id="government-document"
-                  type="file"
-                  accept="image/*,.pdf"
-                  className="sr-only"
-                  onChange={(event) => setSelectedDocument(event.target.files?.[0] || null)}
-                />
-            </label>
+            <div className="flex flex-col gap-3">
+              <p className="text-[10px] uppercase font-bold tracking-widest text-slate-500">Choose document type</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                {[
+                  { value: "id", label: "Government ID" },
+                  { value: "passport", label: "Passport" },
+                  { value: "licence", label: "Driver's Licence" },
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setDocumentType(option.value as "id" | "passport" | "licence")}
+                    className={`px-3 py-3 rounded-[10px] border text-[10px] font-bold uppercase tracking-wide transition-all ${documentType === option.value ? "border-emerald-500/50 bg-emerald-500/10 text-emerald-400" : "border-white/10 bg-white/5 text-slate-400 hover:border-white/20"}`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {documentType === "id" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  { id: "government-id-front", label: "Front of ID", file: frontDocument, setFile: setFrontDocument },
+                  { id: "government-id-back", label: "Back of ID", file: backDocument, setFile: setBackDocument },
+                ].map((upload) => (
+                  <label key={upload.id} htmlFor={upload.id} className="p-5 border-2 border-dashed border-white/10 rounded-[10px] flex flex-col items-center gap-3 cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all text-center">
+                    <Key size={22} className="text-slate-500" />
+                    <span className="text-xs font-bold text-white break-all">{upload.file ? upload.file.name : upload.label}</span>
+                    <span className="text-[9px] text-slate-500 uppercase tracking-widest">Select image or PDF</span>
+                    <input id={upload.id} type="file" accept="image/*,.pdf" className="sr-only" onChange={(event) => upload.setFile(event.target.files?.[0] || null)} />
+                  </label>
+                ))}
+              </div>
+            ) : (
+              <label htmlFor="single-government-document" className="p-6 sm:p-8 border-2 border-dashed border-white/10 rounded-[10px] flex flex-col items-center gap-3 cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all text-center">
+                <Key size={24} className="text-slate-500" />
+                <span className="text-sm font-bold text-white break-all">{singleDocument ? singleDocument.name : `Choose ${documentType === "passport" ? "passport" : "driver's licence"}`}</span>
+                <span className="text-[10px] text-slate-500 uppercase tracking-widest">Select image or PDF</span>
+                <input id="single-government-document" type="file" accept="image/*,.pdf" className="sr-only" onChange={(event) => setSingleDocument(event.target.files?.[0] || null)} />
+              </label>
+            )}
 
             <button 
               onClick={handleKycSubmit}
-              disabled={loading || !selectedDocument}
+              disabled={loading || (documentType === "id" ? !frontDocument || !backDocument : !singleDocument)}
               className="emerald-button py-6 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-[0.3em] text-xs transition-all hover:tracking-[0.4em]"
             >
               {loading ? <><motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 0.8 }} className="w-4 h-4 border-2 border-black/20 border-t-black rounded-full" /> Verifying...</> : <>Verify Identity to Proceed <ArrowRight size={18} /></>}
