@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { GlassCard } from "./ui/GlassCard";
-import { Shield, Smartphone, Key, ArrowRight, CheckCircle, ArrowLeft } from "lucide-react";
+import { Key, ArrowRight, ArrowLeft } from "lucide-react";
 import { doc, setDoc } from "firebase/firestore";
 import { db, auth, firebaseAvailable } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -15,6 +15,7 @@ interface OnboardingProps {
 export default function Onboarding({ step, onNext, onComplete }: OnboardingProps) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [selectedDocument, setSelectedDocument] = useState<File | null>(null);
 
   const handleSignOut = () => {
     if (firebaseAvailable) auth.signOut();
@@ -60,43 +61,33 @@ export default function Onboarding({ step, onNext, onComplete }: OnboardingProps
                 <img src="/logo.png" alt="Poly-Crow" className="relative w-24 h-24 object-contain brightness-125 drop-shadow-[0_0_14px_rgba(92,255,239,0.85)]" />
               </div>
               <div>
-                <h2 className="text-4xl font-display font-bold text-white mb-2">Biometric Escrow Entry</h2>
-                <p className="text-slate-400 text-sm max-w-sm">Secure your account with decentralized KYC. Your identity is hashed and stored on-chain for zero-knowledge verification.</p>
+                <h2 className="text-4xl font-display font-bold text-white mb-2">KYC Identity Verification</h2>
+                <p className="text-slate-400 text-sm max-w-sm">Verify your account by securely submitting a government-issued identity document.</p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 group hover:border-emerald-500/30 transition-all cursor-pointer">
-                <div className="p-3 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500/20 transition-all"><Smartphone size={20} className="text-emerald-400" /></div>
-                <div className="flex-1">
-                  <p className="text-[10px] font-bold text-white uppercase tracking-widest">Mobile Auth</p>
-                  <p className="text-[9px] text-emerald-400/60 font-mono">ENCRYPTED LINK</p>
-                </div>
-                <CheckCircle size={18} className="text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-              </div>
-
-              <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex items-center gap-4 group hover:border-emerald-500/30 transition-all cursor-pointer opacity-60">
-                <div className="p-3 bg-white/5 rounded-xl"><Smartphone size={20} className="text-slate-400" /></div>
-                <div className="flex-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Face ID</p>
-                  <p className="text-[9px] text-slate-500 font-mono">PENDING SCAN</p>
-                </div>
-              </div>
-              
-              <div className="md:col-span-2 p-8 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center gap-3 cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group">
+            <div className="grid grid-cols-1 gap-4">
+              <label htmlFor="government-document" className="p-8 border-2 border-dashed border-white/10 rounded-3xl flex flex-col items-center gap-3 cursor-pointer hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all group">
                 <div className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
                   <Key size={24} className="text-slate-500 group-hover:text-emerald-400" />
                 </div>
                 <div className="text-center">
-                  <p className="text-sm font-bold text-white">Upload Government Credentials</p>
-                  <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Encrypted via poly-crow protocol</p>
+                  <p className="text-sm font-bold text-white">{selectedDocument ? selectedDocument.name : "Upload Government ID"}</p>
+                  <p className="text-[10px] text-slate-500 uppercase tracking-widest mt-1">Passport, national ID, or driving licence</p>
                 </div>
-              </div>
+                <input
+                  id="government-document"
+                  type="file"
+                  accept="image/*,.pdf"
+                  className="sr-only"
+                  onChange={(event) => setSelectedDocument(event.target.files?.[0] || null)}
+                />
+              </label>
             </div>
 
             <button 
               onClick={handleKycSubmit}
-              disabled={loading}
+              disabled={loading || !selectedDocument}
               className="emerald-button py-6 rounded-2xl flex items-center justify-center gap-3 uppercase tracking-[0.3em] text-xs transition-all hover:tracking-[0.4em]"
             >
               {loading ? (
