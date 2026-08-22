@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { 
   LayoutDashboard, 
   PlusCircle, 
@@ -26,28 +26,16 @@ import { useChatActivity } from "./hooks/useChatActivity";
 import { signInWithPopup, GoogleAuthProvider } from "firebase/auth";
 import { auth, db, firebaseAvailable } from "./lib/firebase";
 import { setDoc, doc, serverTimestamp, updateDoc } from "firebase/firestore";
-
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const CreateAgreement = lazy(() => import("./pages/CreateAgreement"));
-const AgreementDetail = lazy(() => import("./pages/AgreementDetail"));
-const Profile = lazy(() => import("./pages/Profile"));
-const AdminPanel = lazy(() => import("./pages/AdminPanel"));
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const AdminAuth = lazy(() => import("./pages/AdminAuth"));
-const Wallet = lazy(() => import("./pages/Wallet"));
-const Onboarding = lazy(() => import("./components/Onboarding"));
-
-function LoadingSurface() {
-  return (
-    <div className="flex min-h-[320px] items-center justify-center">
-      <motion.div
-        animate={{ scale: [1, 1.2, 1], rotate: 360 }}
-        transition={{ repeat: Infinity, duration: 2 }}
-        className="w-10 h-10 border-4 border-emerald-500/20 border-t-emerald-500 rounded-full"
-      />
-    </div>
-  );
-}
+import Dashboard from "./pages/Dashboard";
+import CreateAgreement from "./pages/CreateAgreement";
+import AgreementDetail from "./pages/AgreementDetail";
+import Profile from "./pages/Profile";
+import AdminPanel from "./pages/AdminPanel";
+import LandingPage from "./pages/LandingPage";
+import AdminAuth from "./pages/AdminAuth";
+import Wallet from "./pages/Wallet";
+import Onboarding from "./components/Onboarding";
+import { getUSDExchangeRates } from "./lib/marketRates";
 
 export default function App() {
   const { user, profile, loading } = useAuth();
@@ -84,7 +72,7 @@ export default function App() {
   }, [user, profile]);
 
   useEffect(() => {
-    import("./lib/marketRates").then(m => m.getUSDExchangeRates().then(setRates));
+    getUSDExchangeRates().then(setRates);
   }, []);
 
   const handleNavigate = (page: string) => {
@@ -196,15 +184,12 @@ export default function App() {
   );
 
   if (!user && !isAdminMode) return (
-    <Suspense fallback={<LoadingSurface />}>
-      <LandingPage onLogin={handleLogin} onAdminPortalClick={() => setIsAdminMode(true)} />
-    </Suspense>
+    <LandingPage onLogin={handleLogin} onAdminPortalClick={() => setIsAdminMode(true)} />
   );
 
   if (isAdminMode && !adminAuthenticated) {
     return (
-      <Suspense fallback={<LoadingSurface />}>
-        <AdminAuth 
+      <AdminAuth 
           onBack={() => setIsAdminMode(false)} 
           onLogin={async ({ email, pass }) => {
             if (email === "admin@polycrow.com" && pass === "polycrow2026") {
@@ -214,7 +199,6 @@ export default function App() {
             return false;
           }}
         />
-      </Suspense>
     );
   }
 
@@ -376,16 +360,14 @@ export default function App() {
       <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
         {user && currentPage === "verify" ? (
           <section className="flex-1 flex items-center justify-center p-8">
-            <Suspense fallback={<LoadingSurface />}>
-              <Onboarding 
+            <Onboarding 
                 step={onboardingStep} 
-                onNext={(next) => setOnboardingStep(next)} 
+                onBack={() => handleNavigate("dashboard")}
                 onComplete={() => {
                   setOnboardingStep("completed");
                   setCurrentPage("dashboard");
                 }}
               />
-            </Suspense>
           </section>
         ) : (
           <>
@@ -426,9 +408,7 @@ export default function App() {
             </header>
 
             <section className="p-8 flex-1 max-w-7xl w-full mx-auto">
-              <Suspense fallback={<LoadingSurface />}>
-                {renderPage()}
-              </Suspense>
+              {renderPage()}
             </section>
 
             {/* Unified Notification & Chat Drawer */}
