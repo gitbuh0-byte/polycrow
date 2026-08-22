@@ -105,7 +105,7 @@ export default function Onboarding({ step, onNext, onComplete }: OnboardingProps
                   Hashing Identity...
                 </div>
               ) : (
-                <>Initialize Secure Vault <ArrowRight size={18} /></>
+                <>Verify Identity to Proceed <ArrowRight size={18} /></>
               )}
             </button>
           </GlassCard>

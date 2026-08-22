@@ -316,7 +316,6 @@ export default function App() {
                     : "text-slate-500 dark:text-slate-400 hover:bg-white/5 hover:text-slate-900 dark:hover:text-white"
                   }`}
                 >
-                  <div className={`w-2 h-2 rounded-full transition-all ${currentPage === item.id ? "bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_#34d399]" : "bg-transparent"}`} />
                   <span className="font-medium">{item.label}</span>
                 </button>
               ))}
@@ -333,8 +332,8 @@ export default function App() {
                     <p className="text-[10px] text-emerald-500 dark:text-emerald-400">Reliability: {profile?.reliabilityScore || "98"}%</p>
                   </div>
                 </div>
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-lg py-1 px-2 text-center text-[10px] text-emerald-400 font-bold tracking-widest">
-                  2FA SECURED
+                <div className={`border rounded-lg py-1 px-2 text-center text-[10px] font-bold tracking-widest ${profile?.kycVerified ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-amber-500/10 border-amber-500/20 text-amber-400"}`}>
+                  {profile?.kycVerified ? "IDENTITY VERIFIED" : "IDENTITY NOT VERIFIED"}
                 </div>
               </GlassCard>
               
