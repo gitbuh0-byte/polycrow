@@ -1,12 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { GlassCard } from "../components/ui/GlassCard";
 import { 
-  initiateMpesaPush, 
-  initiateAirtelMoney, 
-  initiateMTNMoMo, 
-  initiatePaystack 
-} from "../lib/paymentGateways";
-import { 
   Smartphone,
   ArrowLeft, 
   Clock, 
@@ -31,7 +25,8 @@ import {
   updateDoc,
   arrayUnion,
   deleteDoc,
-  increment
+  increment,
+  runTransaction
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
@@ -87,62 +82,19 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
 
   const [loading, setLoading] = useState(false);
 
-  const processPayment = async () => {
-    if (!agreement || !user) return false;
-    
-    // Find a suitable gateway for the currency
-    const gateway = gateways.find(g => g.currencies.includes(agreement.currency)) || gateways[3]; // Fallback to Paystack
-    
-    let response;
-    switch (gateway.id) {
-      case "MPESA":
-        {
-          const phoneNumber = profile?.phoneNumber || user.phoneNumber || "";
-          if (!phoneNumber) {
-            alert("Add your M-Pesa phone number in Profile before funding this agreement.");
-            return false;
-          }
-          response = await initiateMpesaPush(phoneNumber, Math.ceil(Number(agreement.stakes)));
-        }
-        break;
-      case "AIRTEL":
-        response = await initiateAirtelMoney(user.email, agreement.stakes);
-        break;
-      case "MTN":
-        response = await initiateMTNMoMo(user.email, agreement.stakes);
-        break;
-      case "PAYSTACK":
-        response = await initiatePaystack(user.email, agreement.stakes);
-        break;
-      default:
-        return true; 
-    }
-
-    if (!response.success) {
-      alert(`Gateway Error: ${response.error}`);
-      return false;
-    }
-    
-    return true;
-  };
-
   const handleFundEscrow = async () => {
     if (!user || !profile || !agreement) return;
     setLoading(true);
     
     // Check balance first
     const cid = agreement.currency || "USD";
-    const currentBalance = Math.max(0, profile.balances?.[cid] || 0);
+    const currentBalance = Math.max(0, (profile.balances?.[cid] || 0)
+      + (cid === "USD" ? profile.balance || 0 : 0)
+      + (cid === "BTC" ? profile.balanceCrypto || 0 : 0));
     const stakes = parseFloat(agreement.stakes);
 
     if (currentBalance < (stakes - 0.00000001)) {
       alert(`Insufficient ${cid} balance in your wallet. (Available: ${currentBalance.toLocaleString(undefined, { maximumFractionDigits: (getCurrencyData(cid) as any)?.type === "crypto" ? 8 : 2 })})`);
-      setLoading(false);
-      return;
-    }
-
-    const paid = await processPayment();
-    if (!paid) {
       setLoading(false);
       return;
     }
@@ -152,6 +104,8 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
       const updateData: any = {
         [`balances.${cid}`]: increment(-stakes)
       };
+      if (cid === "USD") updateData.balance = increment(-stakes);
+      if (cid === "BTC") updateData.balanceCrypto = increment(-stakes);
       await updateDoc(doc(db, "users", user.uid), updateData);
 
       // Add transaction record
@@ -210,6 +164,29 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
       liquidator: user.uid,
     });
     // Multi-user logic: This would typically trigger a dispute flow
+  };
+
+  const refundExpiredAgreement = async () => {
+    if (!agreement || agreement.status !== "pending" || agreement.createdBy !== user.uid) return;
+    try {
+      await runTransaction(db, async (transaction) => {
+        const agreementRef = doc(db, "agreements", agreement.id);
+        const agreementSnapshot = await transaction.get(agreementRef);
+        const current = agreementSnapshot.data();
+        if (!current || current.status !== "pending" || current.refundApplied === true) return;
+
+        const currency = current.currency || "USD";
+        const amount = Number(current.stakes) || 0;
+        const refundData: any = { [`balances.${currency}`]: increment(amount) };
+        if (currency === "USD") refundData.balance = increment(amount);
+        if (currency === "BTC") refundData.balanceCrypto = increment(amount);
+        transaction.update(doc(db, "users", current.createdBy), refundData);
+        transaction.update(agreementRef, { status: "completed", refundApplied: true, refundedAt: serverTimestamp() });
+      });
+      onBack();
+    } catch (error) {
+      console.error("Agreement refund failed:", error);
+    }
   };
 
   if (!agreement) return null;
@@ -385,9 +362,8 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                   })()}
                   onExpire={async () => {
                     if (agreement.status === "pending") {
-                        console.log("Agreement expired while viewing (pending)");
-                        await deleteDoc(doc(db, "agreements", agreement.id));
-                        onBack();
+                      console.log("Refunding agreement after pending expiry");
+                      await refundExpiredAgreement();
                     } else if (agreement.status === "active") {
                         console.log("Agreement expired while viewing (active)");
                         await updateDoc(doc(db, "agreements", agreement.id), {

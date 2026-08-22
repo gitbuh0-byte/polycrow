@@ -75,6 +75,8 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
       const updateData: any = {
         [`balances.${cid}`]: increment(-stakeNum)
       };
+      if (cid === "USD") updateData.balance = increment(-stakeNum);
+      if (cid === "BTC") updateData.balanceCrypto = increment(-stakeNum);
 
       await updateDoc(doc(db, "users", user.uid), updateData);
 

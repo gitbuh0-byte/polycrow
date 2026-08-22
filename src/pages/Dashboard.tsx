@@ -3,7 +3,7 @@ import { GlassCard } from "../components/ui/GlassCard";
 import { Plus, Clock, Users, ArrowUpRight, TrendingUp, AlertTriangle, Trash2, MessageCircle, User as UserIcon, ShieldCheck } from "lucide-react";
 import { motion } from "motion/react";
 import { useState, useEffect } from "react";
-import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, or, updateDoc, serverTimestamp } from "firebase/firestore";
+import { collection, query, where, onSnapshot, orderBy, doc, deleteDoc, or, updateDoc, serverTimestamp, runTransaction, increment } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { formatAmount, getCurrencyData } from "../lib/currencyUtils";
@@ -41,6 +41,27 @@ export default function Dashboard({ onSelectAgreement, onCreateAgreement, onVeri
     }
   };
 
+  const refundExpiredAgreement = async (agreement: any) => {
+    try {
+      await runTransaction(db, async (transaction) => {
+        const agreementRef = doc(db, "agreements", agreement.id);
+        const agreementSnapshot = await transaction.get(agreementRef);
+        const current = agreementSnapshot.data();
+        if (!current || current.status !== "pending" || current.refundApplied === true) return;
+
+        const currency = current.currency || "USD";
+        const amount = Number(current.stakes) || 0;
+        const refundData: any = { [`balances.${currency}`]: increment(amount) };
+        if (currency === "USD") refundData.balance = increment(amount);
+        if (currency === "BTC") refundData.balanceCrypto = increment(amount);
+        transaction.update(doc(db, "users", current.createdBy), refundData);
+        transaction.update(agreementRef, { status: "completed", refundApplied: true, refundedAt: serverTimestamp() });
+      });
+    } catch (error) {
+      console.error("Agreement refund failed:", error);
+    }
+  };
+
   useEffect(() => {
     if (!user) return;
     
@@ -65,9 +86,9 @@ export default function Dashboard({ onSelectAgreement, onCreateAgreement, onVeri
       agreementsData.forEach(async (agreement: any) => {
         const expiryTime = calculateTargetDate(agreement).getTime();
         if (Date.now() > expiryTime) {
-          if (agreement.status === "pending") {
-             console.log(`Auto-deleting expired pending agreement: ${agreement.id}`);
-             await deleteDoc(doc(db, "agreements", agreement.id));
+          if (agreement.status === "pending" && agreement.createdBy === user.uid) {
+             console.log(`Refunding expired pending agreement: ${agreement.id}`);
+             await refundExpiredAgreement(agreement);
           } else if (agreement.status === "active") {
              console.log(`Auto-completing expired active agreement: ${agreement.id}`);
              await updateDoc(doc(db, "agreements", agreement.id), {
