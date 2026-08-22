@@ -371,7 +371,7 @@ export default function App() {
           </section>
         ) : (
           <>
-            <header className="h-20 border-b border-black/5 dark:border-white/5 px-8 flex items-center justify-between backdrop-blur-md sticky top-0 z-40 bg-white/50 dark:bg-[#05070a]/50">
+            <header className="min-h-20 py-3 border-b border-black/5 dark:border-white/5 px-4 sm:px-8 flex items-center justify-between gap-3 backdrop-blur-md sticky top-0 z-40 bg-white/50 dark:bg-[#05070a]/50">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -382,13 +382,13 @@ export default function App() {
                   {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
                   <span className="sr-only">Menu</span>
                 </button>
-                <div>
-                  <h1 className="text-lg font-semibold text-slate-900 dark:text-white capitalize">{currentPage}</h1>
-                  <p className="text-xs text-slate-500">Poly-Crow Escrow Control Center</p>
+                <div className="min-w-0">
+                  <h1 className="text-base sm:text-lg font-semibold text-slate-900 dark:text-white capitalize truncate">{currentPage}</h1>
+                  <p className="text-[10px] sm:text-xs text-slate-500 truncate">Poly-Crow Escrow Control Center</p>
                 </div>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2 sm:gap-4 shrink-0">
                 <button 
                   onClick={() => handleNavigate("wallet")}
                   className="hidden md:flex items-center gap-3 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl hover:bg-emerald-500/20 transition-all cursor-pointer"
@@ -407,7 +407,7 @@ export default function App() {
               </div>
             </header>
 
-            <section className="p-8 flex-1 max-w-7xl w-full mx-auto">
+            <section className="px-4 sm:px-8 pt-6 sm:pt-8 pb-10 flex-1 max-w-7xl w-full mx-auto">
               {renderPage()}
             </section>
 

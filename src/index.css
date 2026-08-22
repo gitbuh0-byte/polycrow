@@ -233,6 +233,11 @@
 }
 
 @layer utilities {
+  .wallet-toolbar-action {
+    min-width: 0;
+    min-height: 44px;
+  }
+
   [class*="rounded-"]:not([class~="rounded-full"]) {
     border-radius: 10px;
   }

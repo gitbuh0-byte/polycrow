@@ -247,13 +247,13 @@ export default function Wallet() {
   };
 
   return (
-    <div className="flex flex-col gap-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+    <div className="flex flex-col gap-7 sm:gap-10">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
         <div className="flex flex-col gap-2">
-          <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white">Financial Hub</h2>
+          <h2 className="text-3xl sm:text-4xl font-display font-bold text-slate-900 dark:text-white">Financial Hub</h2>
           <p className="text-slate-500 dark:text-white/40">Manage your liquidity across fiat and digital asset classes.</p>
         </div>
-        <div className="flex gap-4">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-4 w-full md:w-auto">
           <div className="hidden sm:flex flex-col items-end gap-1">
              <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-500 uppercase tracking-widest">
                 <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
@@ -265,24 +265,24 @@ export default function Wallet() {
           </div>
           <button 
             onClick={() => setActiveView("history")}
-            className="flex items-center gap-2 px-6 py-3 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-black/10 dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-300"
+            className="wallet-toolbar-action flex items-center justify-center gap-2 px-3 sm:px-6 py-3 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-[10px] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-black/10 dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-300"
           >
-            <History size={16} /> Transaction History
+            <History size={16} className="shrink-0" /> <span className="truncate">Transaction History</span>
           </button>
           <button 
             onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: 'dashboard' }))}
-            className="flex items-center gap-2 px-6 py-3 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl text-[10px] font-bold uppercase tracking-widest hover:bg-black/10 dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-300"
+            className="wallet-toolbar-action flex items-center justify-center gap-2 px-3 sm:px-6 py-3 bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-[10px] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:bg-black/10 dark:hover:bg-white/10 transition-all text-slate-600 dark:text-slate-300"
           >
-            <ArrowLeft size={16} /> Exit Hub
+            <ArrowLeft size={16} className="shrink-0" /> <span className="truncate">Exit Hub</span>
           </button>
         </div>
       </div>
 
       {activeView === "overview" && (
         <>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-8">
             {/* Fiat Wallet */}
-            <GlassCard className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20 p-8 flex flex-col gap-10">
+            <GlassCard className="bg-gradient-to-br from-emerald-500/10 to-blue-500/10 border-emerald-500/20 p-4 sm:p-8 flex flex-col gap-7 sm:gap-10">
               <div className="flex justify-between items-start">
                 <div className="p-4 bg-emerald-500 rounded-2xl shadow-lg shadow-emerald-500/20">
                   <WalletIcon className="text-black" size={24} />
@@ -332,7 +332,7 @@ export default function Wallet() {
             </GlassCard>
 
             {/* Crypto Wallet */}
-            <GlassCard className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20 p-8 flex flex-col gap-10">
+            <GlassCard className="bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20 p-4 sm:p-8 flex flex-col gap-7 sm:gap-10">
               <div className="flex justify-between items-start">
                 <div className="p-4 bg-amber-500 rounded-2xl shadow-lg shadow-amber-500/20">
                   <Bitcoin className="text-black" size={24} />
