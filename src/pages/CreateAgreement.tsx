@@ -22,7 +22,8 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
     title: "",
     description: "",
     stakes: "",
-    duration: "24", // hours
+    durationValue: "24",
+    durationUnit: "hours" as "minutes" | "hours" | "days",
     participantEmail: "",
     currency: "USD",
   });
@@ -33,6 +34,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
 
   const inviteLink = createdId ? `${window.location.origin}/?joinDeal=${createdId}` : "";
   const currentCurrency = getCurrencyData(form.currency);
+  const CurrentCurrencyIcon = currentCurrency.icon;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,12 +53,14 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
         return;
       }
 
-      const durationHours = Number(form.duration);
-      if (!Number.isInteger(durationHours) || durationHours < 1 || durationHours > 24) {
-        alert("Choose a time limit between 1 and 24 hours.");
+      const durationValue = Number(form.durationValue);
+      const durationLimits = { minutes: 10080, hours: 168, days: 7 };
+      if (!Number.isInteger(durationValue) || durationValue < 1 || durationValue > durationLimits[form.durationUnit]) {
+        alert("Choose a valid time limit up to 7 days.");
         setLoading(false);
         return;
       }
+      const durationMinutes = form.durationUnit === "days" ? durationValue * 1440 : form.durationUnit === "hours" ? durationValue * 60 : durationValue;
 
       // Check balance
       const cid = form.currency;
@@ -76,7 +80,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
       await updateDoc(doc(db, "users", user.uid), updateData);
 
       const expirationDate = new Date();
-      expirationDate.setHours(expirationDate.getHours() + durationHours);
+      expirationDate.setTime(expirationDate.getTime() + durationMinutes * 60 * 1000);
 
       const docRef = await addDoc(collection(db, "agreements"), {
         title: form.title,
@@ -89,6 +93,9 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
         status: "pending",
         isFunded: { [user.uid]: true }, // Creator funded it
         timerEnd: expirationDate.toISOString(),
+        durationValue,
+        durationUnit: form.durationUnit,
+        durationMinutes,
         createdBy: user.uid,
         createdAt: serverTimestamp(),
       });
@@ -263,7 +270,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
                   <div className="flex items-center gap-2">
                     {t("stakes")} 
                     <span className="flex items-center gap-1.5 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded-full border border-black/5 dark:border-white/10 ml-1 text-slate-900 dark:text-white uppercase tracking-widest">
-                      <currentCurrency.icon size={12} className={currentCurrency.color} />
+                      <CurrentCurrencyIcon size={12} className={currentCurrency.color} />
                       {form.currency}
                     </span>
                   </div>
@@ -282,7 +289,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
                 </label>
               <div className="relative">
                 <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <currentCurrency.icon size={20} className={currentCurrency.color} />
+                  <CurrentCurrencyIcon size={20} className={currentCurrency.color} />
                 </div>
                 <input 
                   required
@@ -298,7 +305,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
                 <span>
                   Selected: 
                   <span className="inline-flex items-center gap-1 font-bold text-slate-900 dark:text-white bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-lg border border-black/5 dark:border-white/10 ml-2">
-                    <currentCurrency.icon size={12} className={currentCurrency.color} />
+                    <CurrentCurrencyIcon size={12} className={currentCurrency.color} />
                     {currentCurrency.label} ({form.currency})
                   </span>
                 </span>
@@ -323,22 +330,33 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
           </div>
 
           <div className="relative">
-            <label htmlFor="duration" className="text-[10px] uppercase font-bold text-slate-500 dark:text-white/40 ml-4 mb-2 block">Time Limit (Hours)</label>
-            <div className="relative">
-              <Clock size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+            <label htmlFor="duration-value" className="text-[10px] uppercase font-bold text-slate-500 dark:text-white/40 ml-4 mb-2 block">Time Limit</label>
+            <div className="grid grid-cols-[1fr_auto] gap-3">
+              <div className="relative">
+                <Clock size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
               <input
-                id="duration"
+                id="duration-value"
                 required
                 type="number"
                 min="1"
-                max="24"
+                max={form.durationUnit === "days" ? 7 : form.durationUnit === "hours" ? 168 : 10080}
                 step="1"
-                value={form.duration}
-                onChange={e => setForm({...form, duration: e.target.value})}
+                value={form.durationValue}
+                onChange={e => setForm({...form, durationValue: e.target.value})}
                 className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-black/20 dark:focus:border-white/20 transition-all text-slate-900 dark:text-white"
               />
+              </div>
+              <select
+                value={form.durationUnit}
+                onChange={e => setForm({...form, durationUnit: e.target.value as "minutes" | "hours" | "days"})}
+                className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-4 outline-none text-slate-900 dark:text-white"
+              >
+                <option value="minutes">Minutes</option>
+                <option value="hours">Hours</option>
+                <option value="days">Days</option>
+              </select>
             </div>
-            <p className="text-[10px] text-slate-400 dark:text-white/30 mt-2 ml-4">Choose 1 to 24 hours for the active agreement window.</p>
+            <p className="text-[10px] text-slate-400 dark:text-white/30 mt-2 ml-4">Choose minutes, hours, or days. The maximum is 7 days.</p>
           </div>
         </GlassCard>
 

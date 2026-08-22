@@ -25,7 +25,7 @@
    RESEND_FROM_EMAIL=Poly-Crow <invites@your-verified-domain.example>
    ```
 
-   The invitation is sent by the server through `POST /api/invitations` after an agreement is created. Never expose `RESEND_API_KEY` with a `VITE_` prefix.
+   The invitation is sent by the server through `POST /api/invitations` after an agreement is created. For the Vercel deployment, add both variables in **Project Settings > Environment Variables** and redeploy. Never expose `RESEND_API_KEY` with a `VITE_` prefix.
 
 5. In Firebase Console, enable **Authentication > Sign-in method > Google**.
 6. Create or enable **Firestore Database** and publish the rules from `firestore.rules`.

@@ -45,7 +45,10 @@ export default function AdminPanel({ onExit }: { onExit: () => void }) {
           <GlassCard key={i} className="p-6">
             <div className="flex justify-between items-start mb-4">
               <div className="p-2 bg-white/5 rounded-xl border border-white/10">
-                <stat.icon size={20} className="text-white/60" />
+                {(() => {
+                  const StatIcon = stat.icon;
+                  return <StatIcon size={20} className="text-white/60" />;
+                })()}
               </div>
               <span className="text-[10px] font-bold text-green-400">{stat.delta}</span>
             </div>

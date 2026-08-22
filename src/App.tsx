@@ -359,7 +359,15 @@ export default function App() {
       {/* Main Content Area */}
       <main className="flex-1 h-screen overflow-y-auto relative flex flex-col">
         {user && currentPage === "verify" ? (
-          <section className="flex-1 flex items-center justify-center p-8">
+          <section className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="mobile-menu-trigger lg:hidden self-start mb-4 h-11 min-w-11 px-3 rounded-[10px] border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center gap-2 shadow-[0_8px_24px_rgba(16,185,129,0.12)]"
+              aria-label={isSidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={isSidebarOpen}
+            >
+              {isSidebarOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
             <Onboarding 
                 step={onboardingStep} 
                 onBack={() => handleNavigate("dashboard")}
@@ -487,7 +495,10 @@ export default function App() {
                           { icon: Bell, text: "New deal code received: PC-XT88", color: "text-blue-500 dark:text-blue-400" },
                         ].map((notif, i) => (
                           <div key={i} className="flex gap-4 items-start p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/5">
-                            <notif.icon size={16} className={`${notif.color} mt-0.5`} />
+                            {(() => {
+                              const NotificationIcon = notif.icon;
+                              return <NotificationIcon size={16} className={`${notif.color} mt-0.5`} />;
+                            })()}
                             <p className="text-[11px] text-slate-600 dark:text-slate-300">{notif.text}</p>
                           </div>
                         ))}

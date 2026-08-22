@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, Check, Globe, Bitcoin } from "lucide-react";
+import { Search, ChevronDown, Check } from "lucide-react";
 import { currencies, getCurrencyData } from "../../lib/currencyUtils";
 import { getUSDExchangeRates, ExchangeRates, convertFromUSD } from "../../lib/marketRates";
 
@@ -24,6 +24,7 @@ export function CurrencyDropdown({ value, onChange, type, baseAmount }: Currency
     );
 
   const selectedCurrency = getCurrencyData(value);
+  const SelectedIcon = selectedCurrency?.icon;
 
   useEffect(() => {
     getUSDExchangeRates().then(setRates);
@@ -47,7 +48,7 @@ export function CurrencyDropdown({ value, onChange, type, baseAmount }: Currency
         <div className="flex items-center gap-3">
           {selectedCurrency ? (
             <>
-              <selectedCurrency.icon size={18} className={selectedCurrency.color} />
+              {SelectedIcon && <SelectedIcon size={18} className={selectedCurrency.color} />}
               <span className="font-bold">{selectedCurrency.label}</span>
               <span className="text-[10px] text-slate-500 font-mono uppercase bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-lg border border-black/5 dark:border-white/5">{selectedCurrency.id}</span>
             </>
@@ -86,7 +87,10 @@ export function CurrencyDropdown({ value, onChange, type, baseAmount }: Currency
                   className={`w-full flex items-center justify-between p-4 rounded-xl transition-all hover:bg-emerald-500/5 group ${value === c.id ? "bg-emerald-500/5 text-emerald-600 dark:text-emerald-400" : "text-slate-600 dark:text-slate-400"}`}
                 >
                   <div className="flex items-center gap-3">
-                    <c.icon size={16} className={value === c.id ? c.color : "text-slate-400 group-hover:text-emerald-500"} />
+                    {(() => {
+                      const CurrencyIcon = c.icon;
+                      return <CurrencyIcon size={16} className={value === c.id ? c.color : "text-slate-400 group-hover:text-emerald-500"} />;
+                    })()}
                     <div className="flex flex-col items-start">
                       <span className="text-sm font-bold">{c.label}</span>
                       <span className="text-[10px] uppercase font-mono tracking-tighter opacity-60">{c.id}</span>

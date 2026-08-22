@@ -370,7 +370,10 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
               ].map((item, i) => (
                 <div key={i} className="flex gap-6">
                   <div className="morph-glass flex-shrink-0 w-12 h-12 bg-white dark:bg-white/5 rounded-[18px] flex items-center justify-center border border-black/5 dark:border-white/10 shadow-sm">
-                    <item.icon size={20} className="text-emerald-500 dark:text-emerald-400" />
+                    {(() => {
+                      const ItemIcon = item.icon;
+                      return <ItemIcon size={20} className="text-emerald-500 dark:text-emerald-400" />;
+                    })()}
                   </div>
                   <div>
                     <h4 className="font-bold text-slate-900 dark:text-white mb-1">{item.title}</h4>

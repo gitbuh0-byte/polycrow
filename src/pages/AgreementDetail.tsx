@@ -360,7 +360,8 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
               <div className="p-4 bg-emerald-500/10 rounded-full mb-4">
                 {(() => {
                   const curr = getCurrencyData(agreement.currency || "USD");
-                  return <curr.icon className={curr.color} size={32} />;
+                  const CurrencyIcon = curr.icon;
+                  return <CurrencyIcon className={curr.color} size={32} />;
                 })()}
               </div>
               <span className="text-3xl sm:text-4xl font-display font-bold text-slate-900 dark:text-white text-center px-4 break-words">

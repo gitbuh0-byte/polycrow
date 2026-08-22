@@ -30,7 +30,6 @@ export default function Wallet() {
   const [sourceAsset, setSourceAsset] = useState("BTC");
   const [targetAsset, setTargetAsset] = useState("USD");
   const [selectedAsset, setSelectedAsset] = useState("USD");
-  const [prevAsset, setPrevAsset] = useState("USD");
   const [selectedGateway, setSelectedGateway] = useState("");
   const [selectedChain, setSelectedChain] = useState("");
   const [selectedPlatform, setSelectedPlatform] = useState("Binance");
@@ -86,25 +85,9 @@ export default function Wallet() {
     return () => unsubscribe();
   }, [user]);
 
-  // Handle real-time conversion when asset changes
-  React.useEffect(() => {
-    if (rates && amount && selectedAsset !== prevAsset) {
-      if (prevAsset === "USD") {
-        const amountNum = parseFloat(amount);
-        if (!isNaN(amountNum)) {
-          const newAmount = convertFromUSD(amountNum, selectedAsset, rates);
-          setAmount(newAmount.toLocaleString(undefined, { 
-            maximumFractionDigits: (getCurrencyData(selectedAsset) as any)?.type === "crypto" ? 8 : 2,
-            useGrouping: false 
-          }));
-        }
-      }
-      setPrevAsset(selectedAsset);
-    }
-  }, [selectedAsset, rates, amount, prevAsset]);
-
   const assetData = getCurrencyData(selectedAsset);
   const isCrypto = (assetData as any)?.type === "crypto";
+  const AmountIcon = getCurrencyData(activeView === "convert" ? sourceAsset : selectedAsset).icon;
 
   const handleCopyAddress = (address?: string) => {
     const defaultAddr = selectedChain === "TRC-20" ? "TXYZ789abc456def7890" : 
@@ -446,16 +429,19 @@ export default function Wallet() {
                   <div className="grid grid-cols-2 gap-2">
                     {gateways
                       .filter(g => g.currencies.includes(selectedAsset))
-                      .map(g => (
+                      .map(g => {
+                        const GatewayIcon = g.icon;
+                        return (
                         <button 
                           key={g.id}
                           onClick={() => setSelectedGateway(g.id)}
                           className={`flex items-center gap-3 p-4 rounded-2xl border transition-all ${selectedGateway === g.id ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400" : "bg-black/5 dark:bg-white/5 border-black/10 dark:border-white/10 text-slate-400"}`}
                         >
-                          <g.icon size={18} className={selectedGateway === g.id ? g.color : ""} />
+                          <GatewayIcon size={18} className={selectedGateway === g.id ? g.color : ""} />
                           <span className="text-[10px] font-bold uppercase tracking-widest">{g.label}</span>
                         </button>
-                      ))}
+                        );
+                      })}
                   </div>
                 </div>
               )}
@@ -534,7 +520,7 @@ export default function Wallet() {
                 </label>
                 <div className="relative">
                   <div className="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-slate-400 z-10 min-w-[3rem] flex items-center pointer-events-none">
-                    {currencies.find(c => c.id === (activeView === "convert" ? sourceAsset : selectedAsset))?.symbol || "$"}
+                    <AmountIcon size={18} className={getCurrencyData(activeView === "convert" ? sourceAsset : selectedAsset).color} />
                   </div>
                   <input 
                     type="number"

@@ -264,7 +264,10 @@ export default function Profile() {
                       >
                         <div className="flex items-center gap-4">
                           <div className="p-3 bg-black/5 dark:bg-white/5 rounded-xl border border-black/5 dark:border-white/10 group-hover:border-emerald-500/30 transition-all">
-                            <item.icon size={20} className="text-slate-400 dark:text-white/40 group-hover:text-emerald-500 transition-colors" />
+                            {(() => {
+                              const ItemIcon = item.icon;
+                              return <ItemIcon size={20} className="text-slate-400 dark:text-white/40 group-hover:text-emerald-500 transition-colors" />;
+                            })()}
                           </div>
                           <div className="flex flex-col items-start">
                             <span className="font-bold text-slate-900 dark:text-white">{item.label}</span>
@@ -421,7 +424,10 @@ export default function Profile() {
                         <div key={i} className="flex items-center justify-between p-4 bg-black/5 dark:bg-white/5 rounded-2xl border border-black/5 dark:border-white/10">
                           <div className="flex items-center gap-4">
                             <div className="p-3 bg-white dark:bg-black/40 rounded-xl">
-                              <item.icon size={18} className="text-emerald-500" />
+                              {(() => {
+                                const ItemIcon = item.icon;
+                                return <ItemIcon size={18} className="text-emerald-500" />;
+                              })()}
                             </div>
                             <div className="flex flex-col">
                               <span className="font-bold text-sm text-slate-900 dark:text-white">{item.label}</span>
