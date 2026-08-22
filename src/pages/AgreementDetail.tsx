@@ -85,7 +85,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
     }
 
     try {
-      const normalizedEmail = user.email?.trim().toLowerCase();
+      const normalizedEmail = (user.email || profile.email || "").trim().toLowerCase();
       const isInvited = !agreement.participants.includes(user.uid)
         && Boolean(normalizedEmail && agreement.invitedParticipants?.some((email: string) => email.trim().toLowerCase() === normalizedEmail));
       await runTransaction(db, async (transaction) => {
@@ -182,6 +182,8 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
 
   const currency = agreement.currency || "USD";
   const invitedEmail = agreement.invitedParticipants?.[0] || "No participant invited";
+  const currentEmail = (user?.email || profile?.email || "").trim().toLowerCase();
+  const isInvitedUser = Boolean(currentEmail && agreement.invitedParticipants?.some((email: string) => email.trim().toLowerCase() === currentEmail));
   const isCurrentUserParticipant = agreement.participants?.includes(user?.uid);
   const currentUserFunded = agreement.isFunded?.[user?.uid] === true;
   const participantCount = agreement.participants?.length || 0;
@@ -250,7 +252,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
               </div>
               <div className="rounded-2xl border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5 p-4">
                 <span className="text-[9px] uppercase font-bold tracking-widest text-slate-500">Participant status</span>
-                <span className="mt-2 block text-sm font-bold text-slate-900 dark:text-white">{isCurrentUserParticipant ? (currentUserFunded ? "Joined and funded" : "Joined, funding required") : `Invited: ${invitedEmail}`}</span>
+                <span className="mt-2 block text-sm font-bold text-slate-900 dark:text-white">{isCurrentUserParticipant ? (currentUserFunded ? "Joined and funded" : "Joined, funding required") : isInvitedUser ? "Invited participant, ready to join" : `Invited: ${invitedEmail}`}</span>
               </div>
             </div>
 
@@ -264,7 +266,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                   {loading ? "Processing Secure Gateway..." : (
                     <>
                       <Smartphone size={24} /> 
-                      {isCurrentUserParticipant ? "Approve and lock my stake" : "Join and fund deal"}
+                      {isInvitedUser ? "Participate and lock my stake" : "Approve and lock my stake"}
                       ({formatAmount(agreement.stakes, currency)})
                     </>
                   )}
