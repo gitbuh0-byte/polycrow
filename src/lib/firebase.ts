@@ -14,16 +14,15 @@ const appFirebaseConfig = {
   projectId,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${projectId}.firebaseapp.com`,
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || undefined,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || undefined,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || undefined,
-  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || "(default)",
+  ...(import.meta.env.VITE_FIREBASE_APP_ID ? { appId: import.meta.env.VITE_FIREBASE_APP_ID } : {}),
+  ...(import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID ? { messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID } : {}),
+  ...(import.meta.env.VITE_FIREBASE_STORAGE_BUCKET ? { storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET } : {}),
 };
 
 export const firebaseAvailable = Boolean(appFirebaseConfig.apiKey);
 
 const app: FirebaseApp | null = firebaseAvailable ? initializeApp(appFirebaseConfig) : null;
-export const db = app ? getFirestore(app, appFirebaseConfig.firestoreDatabaseId) : (null as unknown as Firestore);
+export const db = app ? getFirestore(app) : (null as unknown as Firestore);
 export const auth = app ? getAuth(app) : (null as unknown as Auth);
 
 async function testConnection() {

@@ -28,6 +28,10 @@ export default function Onboarding({ step, onBack, onComplete }: OnboardingProps
       const saveVerification = setDoc(doc(db, "users", user.uid), {
         kycVerified: true,
         onboardingCompleted: true,
+        verificationDocumentType: documentType,
+        verificationDocuments: documentType === "id"
+          ? { front: frontDocument?.name, back: backDocument?.name }
+          : { document: singleDocument?.name },
       }, { merge: true });
       await Promise.race([
         saveVerification,
@@ -36,7 +40,8 @@ export default function Onboarding({ step, onBack, onComplete }: OnboardingProps
       onComplete();
     } catch (error) {
       console.error("KYC update failed:", error);
-      alert("Verification could not be completed. Check your connection and try again.");
+      const code = error instanceof Error && "code" in error ? ` (${String((error as { code?: string }).code)})` : "";
+      alert(`Verification could not be completed${code}. Check Firebase settings and try again.`);
     } finally {
       setLoading(false);
     }
