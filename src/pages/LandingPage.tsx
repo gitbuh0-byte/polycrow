@@ -37,9 +37,9 @@ const orbitNodes = [
 const revealTransition = { duration: 0.8, ease: [0.22, 1, 0.36, 1] };
 const rotatingHeroLines = [
   "YOU CAN TRUST",
-  "MOVE WITH CONFIDENCE",
-  "TRADE WITHOUT FEAR",
-  "SETTLE WITH CLARITY",
+  "WITH CONFIDENCE",
+  "WITHOUT FEAR",
+  "WITH CLARITY",
 ];
 
 function FlipLetters({ text, className, letterClassName }: { text: string; className?: string; letterClassName?: string }) {
