@@ -17,10 +17,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const loadingTimeout = window.setTimeout(() => {
+      setLoading(false);
+      console.error("Firebase authentication timed out. Check Vercel Firebase environment variables and authorized domains.");
+    }, 8000);
+
     if (!firebaseAvailable) {
       setUser(null);
       setProfile(null);
       setLoading(false);
+      window.clearTimeout(loadingTimeout);
       return;
     }
 
@@ -29,9 +35,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!u) {
         setProfile(null);
         setLoading(false);
+        window.clearTimeout(loadingTimeout);
       }
+    }, (error) => {
+      console.error("Firebase authentication error:", error);
+      setUser(null);
+      setProfile(null);
+      setLoading(false);
+      window.clearTimeout(loadingTimeout);
     });
-    return unsubscribe;
+    return () => {
+      window.clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
   }, []);
 
   useEffect(() => {
