@@ -8,9 +8,16 @@ import type { Firestore } from "firebase/firestore";
 // This file is expected to be created by the set_up_firebase tool
 import firebaseConfig from "../../firebase-applet-config.json";
 
+const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID || "polycrow-32b7e";
 const appFirebaseConfig = {
   ...firebaseConfig,
+  projectId,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || `${projectId}.firebaseapp.com`,
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || undefined,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || undefined,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || undefined,
+  firestoreDatabaseId: import.meta.env.VITE_FIREBASE_DATABASE_ID || "(default)",
 };
 
 export const firebaseAvailable = Boolean(appFirebaseConfig.apiKey);

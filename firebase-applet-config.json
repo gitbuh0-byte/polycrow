@@ -1,10 +1,10 @@
 {
-  "projectId": "gen-lang-client-0287693007",
-  "appId": "1:838776147180:web:65a521f48d9a7617e569c9",
+  "projectId": "polycrow-32b7e",
+  "appId": "1:248057072354:web:e1867c4812a96b50016cbb",
   "apiKey": "",
-  "authDomain": "gen-lang-client-0287693007.firebaseapp.com",
-  "firestoreDatabaseId": "ai-studio-4afd5d21-4e08-458d-856c-b368c1689132",
-  "storageBucket": "gen-lang-client-0287693007.firebasestorage.app",
-  "messagingSenderId": "838776147180",
-  "measurementId": ""
+  "authDomain": "polycrow-32b7e.firebaseapp.com",
+  "firestoreDatabaseId": "(default)",
+  "storageBucket": "polycrow-32b7e.firebasestorage.app",
+  "messagingSenderId": "248057072354",
+  "measurementId": "G-X8GMJC9JHS"
 }
