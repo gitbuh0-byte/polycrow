@@ -37,7 +37,7 @@ import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
-import { formatAmount, getCurrencyData, gateways } from "../lib/currencyUtils";
+import { formatAmount, getCurrencyData, gateways, CurrencyMark } from "../lib/currencyUtils";
 import { CountdownTimer } from "../components/ui/CountdownTimer";
 
 interface AgreementDetailProps {
@@ -360,8 +360,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
               <div className="p-4 bg-emerald-500/10 rounded-full mb-4">
                 {(() => {
                   const curr = getCurrencyData(agreement.currency || "USD");
-                  const CurrencyIcon = curr.icon;
-                  return <CurrencyIcon className={curr.color} size={32} />;
+                  return <CurrencyMark currencyId={agreement.currency || "USD"} className={curr.color} size={32} />;
                 })()}
               </div>
               <span className="text-3xl sm:text-4xl font-display font-bold text-slate-900 dark:text-white text-center px-4 break-words">

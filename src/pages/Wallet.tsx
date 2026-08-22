@@ -20,7 +20,7 @@ import {
 import { useAuth } from "../context/AuthContext";
 import { doc, updateDoc, increment, collection, addDoc, serverTimestamp, query, where, orderBy, onSnapshot } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { currencies, gateways, formatAmount, getCurrencyData } from "../lib/currencyUtils";
+import { currencies, gateways, formatAmount, getCurrencyData, CurrencyMark } from "../lib/currencyUtils";
 import { CurrencyDropdown } from "../components/ui/CurrencyDropdown";
 import { getUSDExchangeRates, ExchangeRates, convertFromUSD, convertToUSD } from "../lib/marketRates";
 
@@ -87,7 +87,7 @@ export default function Wallet() {
 
   const assetData = getCurrencyData(selectedAsset);
   const isCrypto = (assetData as any)?.type === "crypto";
-  const AmountIcon = getCurrencyData(activeView === "convert" ? sourceAsset : selectedAsset).icon;
+  const amountCurrency = activeView === "convert" ? sourceAsset : selectedAsset;
 
   const handleCopyAddress = (address?: string) => {
     const defaultAddr = selectedChain === "TRC-20" ? "TXYZ789abc456def7890" : 
@@ -520,7 +520,7 @@ export default function Wallet() {
                 </label>
                 <div className="relative">
                   <div className="absolute left-6 top-1/2 -translate-y-1/2 font-bold text-slate-400 z-10 min-w-[3rem] flex items-center pointer-events-none">
-                    <AmountIcon size={18} className={getCurrencyData(activeView === "convert" ? sourceAsset : selectedAsset).color} />
+                    <CurrencyMark currencyId={amountCurrency} size={18} className={getCurrencyData(amountCurrency).color} />
                   </div>
                   <input 
                     type="number"

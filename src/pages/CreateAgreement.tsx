@@ -6,7 +6,7 @@ import { collection, addDoc, serverTimestamp, updateDoc, doc, increment } from "
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "motion/react";
-import { currencies, getCurrencyData, formatAmount } from "../lib/currencyUtils";
+import { currencies, getCurrencyData, formatAmount, CurrencyMark } from "../lib/currencyUtils";
 import { CurrencyDropdown } from "../components/ui/CurrencyDropdown";
 
 interface CreateAgreementProps {
@@ -34,7 +34,6 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
 
   const inviteLink = createdId ? `${window.location.origin}/?joinDeal=${createdId}` : "";
   const currentCurrency = getCurrencyData(form.currency);
-  const CurrentCurrencyIcon = currentCurrency.icon;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -270,7 +269,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
                   <div className="flex items-center gap-2">
                     {t("stakes")} 
                     <span className="flex items-center gap-1.5 px-2 py-0.5 bg-black/5 dark:bg-white/5 rounded-full border border-black/5 dark:border-white/10 ml-1 text-slate-900 dark:text-white uppercase tracking-widest">
-                      <CurrentCurrencyIcon size={12} className={currentCurrency.color} />
+                      <CurrencyMark currencyId={form.currency} size={12} className={currentCurrency.color} />
                       {form.currency}
                     </span>
                   </div>
@@ -289,7 +288,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
                 </label>
               <div className="relative">
                 <div className="absolute left-6 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                  <CurrentCurrencyIcon size={20} className={currentCurrency.color} />
+                  <CurrencyMark currencyId={form.currency} size={20} className={currentCurrency.color} />
                 </div>
                 <input 
                   required
@@ -305,7 +304,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
                 <span>
                   Selected: 
                   <span className="inline-flex items-center gap-1 font-bold text-slate-900 dark:text-white bg-black/5 dark:bg-white/5 px-2 py-0.5 rounded-lg border border-black/5 dark:border-white/10 ml-2">
-                    <CurrentCurrencyIcon size={12} className={currentCurrency.color} />
+                    <CurrencyMark currencyId={form.currency} size={12} className={currentCurrency.color} />
                     {currentCurrency.label} ({form.currency})
                   </span>
                 </span>
@@ -349,11 +348,12 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
               <select
                 value={form.durationUnit}
                 onChange={e => setForm({...form, durationUnit: e.target.value as "minutes" | "hours" | "days"})}
-                className="bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl px-4 py-4 outline-none text-slate-900 dark:text-white"
+                aria-label="Time limit unit"
+                className="min-w-[7.5rem] appearance-none bg-white dark:bg-slate-900 border border-emerald-500/30 rounded-2xl px-4 py-4 outline-none text-slate-900 dark:text-white font-semibold shadow-sm"
               >
-                <option value="minutes">Minutes</option>
-                <option value="hours">Hours</option>
-                <option value="days">Days</option>
+                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-white" value="minutes">Minutes</option>
+                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-white" value="hours">Hours</option>
+                <option className="bg-white text-slate-900 dark:bg-slate-900 dark:text-white" value="days">Days</option>
               </select>
             </div>
             <p className="text-[10px] text-slate-400 dark:text-white/30 mt-2 ml-4">Choose minutes, hours, or days. The maximum is 7 days.</p>
