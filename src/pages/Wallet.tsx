@@ -323,7 +323,7 @@ export default function Wallet() {
                 <div className="flex flex-col items-end gap-2">
                   <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-amber-600 dark:text-amber-400">Digital Asset Vault</span>
                   <button 
-                    onClick={handleCopyAddress}
+                    onClick={() => handleCopyAddress()}
                     className="flex items-center gap-2 px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[10px] font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-500/20 transition-all"
                   >
                     {copied ? <Check size={12} /> : <Copy size={12} />}

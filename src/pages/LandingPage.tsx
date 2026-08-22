@@ -34,7 +34,7 @@ const orbitNodes = [
   { size: 14, start: 350, ring: [80, 40, 40, 80], duration: 16, delay: -5, direction: 1 },
 ];
 
-const revealTransition = { duration: 0.8, ease: [0.22, 1, 0.36, 1] };
+const revealTransition = { duration: 0.8, ease: [0.22, 1, 0.36, 1] as [number, number, number, number] };
 const rotatingHeroLines = [
   "YOU CAN TRUST",
   "WITH CONFIDENCE",
