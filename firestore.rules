@@ -82,7 +82,28 @@ service cloud.firestore {
     match /users/{userId} {
       allow get: if isSignedIn();
       allow create: if isOwner(userId);
-      allow update: if isOwner(userId) || isAdmin();
+      allow update: if isAdmin() || (isOwner(userId) && (
+        incoming().diff(existing()).affectedKeys().hasOnly([
+          'kycVerified',
+          'onboardingCompleted',
+          'verificationDocumentType',
+          'verificationDocuments'
+        ]) || incoming().diff(existing()).affectedKeys().hasOnly([
+          'displayName',
+          'photoURL',
+          'phoneNumber',
+          'email',
+          'reliabilityScore',
+          'balance',
+          'balanceCrypto',
+          'balances',
+          'systemResetDone',
+          'kycVerified',
+          'onboardingCompleted',
+          'verificationDocumentType',
+          'verificationDocuments'
+        ])
+      ));
     }
 
     match /agreements/{agreementId} {

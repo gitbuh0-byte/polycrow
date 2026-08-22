@@ -23,25 +23,43 @@ export default function Onboarding({ step, onBack, onComplete }: OnboardingProps
   const handleKycSubmit = async () => {
     const hasRequiredDocuments = documentType === "id" ? frontDocument && backDocument : singleDocument;
     if (!user || !firebaseAvailable || !hasRequiredDocuments) return;
+    if (!navigator.onLine) {
+      alert("You are offline. Reconnect to the internet and try again.");
+      return;
+    }
     setLoading(true);
     try {
-      const saveVerification = setDoc(doc(db, "users", user.uid), {
+      const verificationData = {
         kycVerified: true,
         onboardingCompleted: true,
         verificationDocumentType: documentType,
         verificationDocuments: documentType === "id"
           ? { front: frontDocument?.name, back: backDocument?.name }
           : { document: singleDocument?.name },
-      }, { merge: true });
-      await Promise.race([
-        saveVerification,
-        new Promise((_, reject) => window.setTimeout(() => reject(new Error("Verification timed out")), 10000))
-      ]);
+      };
+      let saved = false;
+      let lastError: unknown;
+      for (let attempt = 0; attempt < 2 && !saved; attempt += 1) {
+        try {
+          await Promise.race([
+            setDoc(doc(db, "users", user.uid), verificationData, { merge: true }),
+            new Promise((_, reject) => window.setTimeout(() => reject(new Error("verification-timeout")), 6000))
+          ]);
+          saved = true;
+        } catch (error) {
+          lastError = error;
+          if (attempt === 0) await new Promise(resolve => window.setTimeout(resolve, 500));
+        }
+      }
+      if (!saved) throw lastError;
       onComplete();
     } catch (error) {
       console.error("KYC update failed:", error);
       const code = error instanceof Error && "code" in error ? ` (${String((error as { code?: string }).code)})` : "";
-      alert(`Verification could not be completed${code}. Check Firebase settings and try again.`);
+      const reason = error instanceof Error && error.message === "verification-timeout"
+        ? " Firestore did not respond. Confirm the Firestore database exists and deploy firestore.rules."
+        : " Check Firebase settings and Firestore permissions.";
+      alert(`Verification could not be completed${code}.${reason}`);
     } finally {
       setLoading(false);
     }
