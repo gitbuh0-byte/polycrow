@@ -1,14 +1,13 @@
 import { useTranslation } from "react-i18next";
 import { GlassCard } from "../components/ui/GlassCard";
 import React, { useState } from "react";
-import { Shield, Clock, Users, DollarSign, Send, ArrowLeft, Bitcoin, Hash, Trash2, Coins, CheckCircle2 } from "lucide-react";
+import { Shield, Clock, Users, ArrowLeft, CheckCircle2 } from "lucide-react";
 import { collection, addDoc, serverTimestamp, updateDoc, doc, increment } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { useAuth } from "../context/AuthContext";
 import { motion } from "motion/react";
 import { currencies, getCurrencyData, formatAmount } from "../lib/currencyUtils";
 import { CurrencyDropdown } from "../components/ui/CurrencyDropdown";
-import { getUSDExchangeRates, ExchangeRates, convertToUSD, convertFromUSD } from "../lib/marketRates";
 
 interface CreateAgreementProps {
   onCreated: () => void;
@@ -19,8 +18,6 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
   const { user, profile } = useAuth();
   const [loading, setLoading] = useState(false);
   const [createdId, setCreatedId] = useState<string | null>(null);
-  const [rates, setRates] = useState<ExchangeRates | null>(null);
-  const [prevCurrency, setPrevCurrency] = useState("USD");
   const [form, setForm] = useState({
     title: "",
     description: "",
@@ -54,6 +51,13 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
         return;
       }
 
+      const durationHours = Number(form.duration);
+      if (!Number.isInteger(durationHours) || durationHours < 1 || durationHours > 24) {
+        alert("Choose a time limit between 1 and 24 hours.");
+        setLoading(false);
+        return;
+      }
+
       // Check balance
       const cid = form.currency;
       const currentBalance = Math.max(0, profile.balances?.[cid] || 0);
@@ -72,7 +76,7 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
       await updateDoc(doc(db, "users", user.uid), updateData);
 
       const expirationDate = new Date();
-      expirationDate.setHours(expirationDate.getHours() + parseInt(form.duration));
+      expirationDate.setHours(expirationDate.getHours() + durationHours);
 
       const docRef = await addDoc(collection(db, "agreements"), {
         title: form.title,
@@ -88,6 +92,28 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
         createdBy: user.uid,
         createdAt: serverTimestamp(),
       });
+
+      try {
+        const inviteResponse = await fetch("/api/invitations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            recipientEmail: form.participantEmail,
+            inviterName: profile.displayName || user.email || "A Poly-Crow user",
+            agreementTitle: form.title,
+            inviteLink: `${window.location.origin}/?joinDeal=${docRef.id}`,
+            currency: form.currency,
+            amount: stakeNum,
+          }),
+        });
+        if (!inviteResponse.ok) {
+          const result = await inviteResponse.json().catch(() => ({}));
+          throw new Error(result.error || "Invitation email could not be sent.");
+        }
+      } catch (inviteError) {
+        console.error("Invitation email failed:", inviteError);
+        alert("Agreement created, but the invitation email could not be sent. Check the server email configuration and share the link manually.");
+      }
       
       // Add transaction record
       await addDoc(collection(db, "transactions"), {
@@ -108,30 +134,6 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
       setLoading(false);
     }
   };
-
-  React.useEffect(() => {
-    getUSDExchangeRates().then(setRates);
-  }, []);
-
-  // Real-time conversion logic
-  React.useEffect(() => {
-    if (rates && form.stakes && form.currency !== prevCurrency) {
-      if (prevCurrency === "USD") {
-        const amountNum = parseFloat(form.stakes);
-        if (!isNaN(amountNum)) {
-          const newAmount = convertFromUSD(amountNum, form.currency, rates);
-          setForm(prev => ({
-            ...prev,
-            stakes: newAmount.toLocaleString(undefined, { 
-              maximumFractionDigits: (getCurrencyData(form.currency) as any)?.type === "crypto" ? 8 : 2,
-              useGrouping: false 
-            })
-          }));
-        }
-      }
-      setPrevCurrency(form.currency);
-    }
-  }, [form.currency, rates, form.stakes, prevCurrency]);
 
   if (createdId) {
     return (
@@ -186,8 +188,6 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
       </div>
     );
   }
-
-  const stakeUSD = rates && form.stakes ? convertToUSD(parseFloat(form.stakes), form.currency, rates) : 0;
 
   return (
     <div className="max-w-3xl mx-auto flex flex-col gap-10">
@@ -255,7 +255,6 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
                 type={currencies.find(c => c.id === form.currency)?.type as "fiat" | "crypto" || "fiat"}
                 value={form.currency}
                 onChange={(val) => setForm({...form, currency: val})}
-                baseAmount={parseFloat(form.stakes) || 0}
               />
             </div>
 
@@ -303,11 +302,6 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
                     {currentCurrency.label} ({form.currency})
                   </span>
                 </span>
-                {rates && form.currency !== "USD" && (
-                   <span className="font-bold text-emerald-500">
-                     ≈ ${stakeUSD.toLocaleString(undefined, { maximumFractionDigits: 2 })} USD
-                   </span>
-                )}
               </p>
             </div>
           </div>
@@ -326,6 +320,25 @@ export default function CreateAgreement({ onCreated }: CreateAgreementProps) {
               />
             </div>
             <p className="text-[10px] text-slate-400 dark:text-white/30 mt-2 ml-4">They will receive an invitation to join the escrow.</p>
+          </div>
+
+          <div className="relative">
+            <label htmlFor="duration" className="text-[10px] uppercase font-bold text-slate-500 dark:text-white/40 ml-4 mb-2 block">Time Limit (Hours)</label>
+            <div className="relative">
+              <Clock size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 dark:text-white/40" />
+              <input
+                id="duration"
+                required
+                type="number"
+                min="1"
+                max="24"
+                step="1"
+                value={form.duration}
+                onChange={e => setForm({...form, duration: e.target.value})}
+                className="w-full bg-black/5 dark:bg-white/5 border border-black/10 dark:border-white/10 rounded-2xl pl-14 pr-6 py-4 outline-none focus:border-black/20 dark:focus:border-white/20 transition-all text-slate-900 dark:text-white"
+              />
+            </div>
+            <p className="text-[10px] text-slate-400 dark:text-white/30 mt-2 ml-4">Choose 1 to 24 hours for the active agreement window.</p>
           </div>
         </GlassCard>
 

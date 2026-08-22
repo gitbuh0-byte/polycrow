@@ -39,7 +39,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { formatDistanceToNow } from "date-fns";
 import { formatAmount, getCurrencyData, gateways } from "../lib/currencyUtils";
 import { CountdownTimer } from "../components/ui/CountdownTimer";
-import { getUSDExchangeRates, ExchangeRates, convertToUSD } from "../lib/marketRates";
 
 interface AgreementDetailProps {
   agreementId: string;
@@ -52,12 +51,9 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
   const [agreement, setAgreement] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [rates, setRates] = useState<ExchangeRates | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    getUSDExchangeRates().then(setRates);
-
     const unsubAgreement = onSnapshot(doc(db, "agreements", agreementId), (doc) => {
       if (!doc.exists()) {
         onBack();
@@ -217,13 +213,13 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
   if (!agreement) return null;
 
   return (
-    <div className="flex flex-col gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <header className="flex items-center justify-between">
-        <button onClick={onBack} className="flex items-center gap-2 text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-colors">
+    <div className="flex flex-col gap-5 sm:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/60 hover:text-slate-900 dark:hover:text-white transition-colors">
           <ArrowLeft size={20} /> Back to Dashboard
         </button>
-        <div className="flex items-center gap-3">
-          <span className={`px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider border ${
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          <span className={`px-3 sm:px-4 py-1.5 rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-wider border ${
             agreement.status === "active" ? "bg-green-500/10 text-green-500 dark:text-green-400 border-green-500/20" : "bg-black/5 dark:bg-white/5 text-slate-400 dark:text-white/40 border-black/5 dark:border-white/10"
           }`}>
             {agreement.status}
@@ -231,16 +227,16 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
         </div>
       </header>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        <div className="xl:col-span-2 flex flex-col gap-8">
-          <GlassCard className="flex flex-col gap-8 border-white/5 bg-white/5 rounded-[32px] p-8 relative overflow-hidden">
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-5 sm:gap-8">
+        <div className="xl:col-span-2 flex flex-col gap-5 sm:gap-8">
+          <GlassCard className="flex flex-col gap-6 sm:gap-8 border-white/5 bg-white/5 rounded-[24px] sm:rounded-[32px] p-4 sm:p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl pointer-events-none" />
             
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5 sm:gap-6">
               <div className="flex flex-col gap-1">
                 <span className="text-[10px] uppercase tracking-[0.2em] text-emerald-500 dark:text-emerald-400 font-bold mb-1 block">Active Agreement</span>
-                <h2 className="text-4xl font-display font-bold text-slate-900 dark:text-white">{agreement.title}</h2>
-                <div className="flex items-center gap-4 text-slate-500">
+                <h2 className="text-2xl sm:text-4xl font-display font-bold text-slate-900 dark:text-white break-words">{agreement.title}</h2>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-slate-500">
                   <div className="flex items-center gap-1">
                     <Users size={14} />
                     <span className="text-xs">{agreement.participants.length} Participants</span>
@@ -250,7 +246,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                 </div>
               </div>
 
-              <div className="flex flex-col items-end">
+              <div className="flex flex-col items-start md:items-end">
                 <span className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-1 block">Status</span>
                 <p className={`text-xl font-bold ${agreement.status === "active" ? "text-emerald-400" : "text-blue-400 animate-pulse"}`}>
                   {agreement.status === "active" ? "LOCKED & SECURE" : "PENDING FUNDING"}
@@ -268,17 +264,17 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
               )}
               {agreement.status === "pending" && (
                 <div className="mt-4 p-4 bg-blue-500/10 border border-blue-500/20 rounded-xl text-[10px] font-bold text-blue-500 uppercase tracking-widest">
-                  Note: This agreement will expire if not funded within 10 minutes.
+                  Note: This agreement will expire when the selected time limit is reached.
                 </div>
               )}
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               {!agreement.isFunded?.[user?.uid] && agreement.status === "pending" ? (
                 <button 
                   onClick={handleFundEscrow}
                   disabled={loading}
-                  className="col-span-2 bg-emerald-500 text-black font-bold py-5 rounded-3xl hover:bg-emerald-400 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 uppercase tracking-widest text-lg disabled:opacity-50"
+                  className="col-span-full bg-emerald-500 text-black font-bold py-5 rounded-3xl hover:bg-emerald-400 transition-all flex items-center justify-center gap-3 shadow-xl shadow-emerald-500/20 uppercase tracking-widest text-lg disabled:opacity-50"
                 >
                   {loading ? "Processing Secure Gateway..." : (
                     <>
@@ -310,7 +306,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
           </GlassCard>
 
           {/* Chat System */}
-          <GlassCard className="flex flex-col gap-6 h-[500px] rounded-[32px] p-0 overflow-hidden bg-white/5 border-white/5">
+          <GlassCard className="flex flex-col gap-6 h-[min(500px,70vh)] min-h-[380px] rounded-[24px] sm:rounded-[32px] p-0 overflow-hidden bg-white/5 border-white/5">
             <div className="p-4 border-b border-white/5 bg-white/5 flex justify-between items-center">
               <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Negotiation Chat</span>
               <div className="flex items-center gap-2">
@@ -319,7 +315,7 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-4 px-6 py-4 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto space-y-4 px-4 sm:px-6 py-4 custom-scrollbar">
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-3 ${msg.senderId === user?.uid ? "justify-end" : "justify-start"}`}>
                   {msg.senderId !== user?.uid && (
@@ -357,8 +353,8 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
         </div>
 
         {/* Sidebar info */}
-        <div className="flex flex-col gap-8">
-          <GlassCard className="flex flex-col gap-6 rounded-[32px] p-8 border-white/5">
+        <div className="flex flex-col gap-5 sm:gap-8">
+          <GlassCard className="flex flex-col gap-6 rounded-[24px] sm:rounded-[32px] p-4 sm:p-8 border-white/5">
             <h4 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 border-b border-black/5 dark:border-white/5 pb-4">Escrow Stake</h4>
               <div className="flex flex-col items-center py-6 bg-slate-50 dark:bg-white/5 rounded-3xl border border-black/5 dark:border-white/5 shadow-inner">
               <div className="p-4 bg-emerald-500/10 rounded-full mb-4">
@@ -367,19 +363,14 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                   return <curr.icon className={curr.color} size={32} />;
                 })()}
               </div>
-              <span className="text-4xl font-display font-bold text-slate-900 dark:text-white text-center px-4">
+              <span className="text-3xl sm:text-4xl font-display font-bold text-slate-900 dark:text-white text-center px-4 break-words">
                 {formatAmount(agreement.stakes, agreement.currency || "USD")}
               </span>
-              {rates && agreement.currency !== "USD" && (
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">
-                  ≈ ${convertToUSD(parseFloat(agreement.stakes), agreement.currency, rates).toLocaleString(undefined, { maximumFractionDigits: 2 })} USD
-                </span>
-              )}
               <span className="text-[10px] uppercase font-bold text-emerald-500 dark:text-emerald-400 mt-2 tracking-widest">Locked in Smart Vault</span>
             </div>
           </GlassCard>
 
-          <GlassCard className="flex flex-col gap-6 rounded-[32px] p-8 border-black/5 dark:border-white/5">
+          <GlassCard className="flex flex-col gap-6 rounded-[24px] sm:rounded-[32px] p-4 sm:p-8 border-black/5 dark:border-white/5">
             <h4 className="text-[10px] uppercase font-bold tracking-widest text-slate-500 border-b border-black/5 dark:border-white/5 pb-4">Secure Audit Log</h4>
             <div className="space-y-4">
               <div className="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/10 flex flex-col items-center gap-3">
@@ -388,10 +379,6 @@ export default function AgreementDetail({ agreementId, onBack }: AgreementDetail
                 </span>
                 <CountdownTimer 
                   targetDate={(() => {
-                    if (agreement.status === "pending" && agreement.createdAt) {
-                        const createdAt = agreement.createdAt.toDate ? agreement.createdAt.toDate() : new Date(agreement.createdAt);
-                        return new Date(createdAt.getTime() + 10 * 60000);
-                    }
                     return agreement.timerEnd ? new Date(agreement.timerEnd) : undefined;
                   })()}
                   onExpire={async () => {

@@ -24,13 +24,6 @@ export default function Dashboard({ onSelectAgreement, onCreateAgreement, onVeri
   const [rates, setRates] = useState<ExchangeRates | null>(null);
 
   const calculateTargetDate = (agreement: any) => {
-    if (agreement.status === "pending" && agreement.createdAt) {
-      // Pending state expires in 10 minutes from creation
-      const createdAt = agreement.createdAt.toDate ? agreement.createdAt.toDate() : new Date(agreement.createdAt);
-      return new Date(createdAt.getTime() + 10 * 60 * 1000);
-    }
-    
-    // For active or other states, use the stored timerEnd
     if (agreement.timerEnd) {
       return new Date(agreement.timerEnd);
     }

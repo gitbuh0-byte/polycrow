@@ -18,6 +18,15 @@
    VITE_FIREBASE_DATABASE_ID=(default)
    ```
 
+   Configure the server email provider as well. Create a Resend API key and verify the sender domain, then add these server-side variables (for local development, put them in `.env` or `.env.local`):
+
+   ```env
+   RESEND_API_KEY=paste_the_resend_api_key_here
+   RESEND_FROM_EMAIL=Poly-Crow <invites@your-verified-domain.example>
+   ```
+
+   The invitation is sent by the server through `POST /api/invitations` after an agreement is created. Never expose `RESEND_API_KEY` with a `VITE_` prefix.
+
 5. In Firebase Console, enable **Authentication > Sign-in method > Google**.
 6. Create or enable **Firestore Database** and publish the rules from `firestore.rules`.
 7. Restart the dev server after changing `.env.local`:

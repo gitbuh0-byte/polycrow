@@ -15,6 +15,16 @@ function normalizeMpesaPhone(phoneNumber: string) {
   return digits;
 }
 
+function escapeHtml(value: string) {
+  return value.replace(/[&<>'"]/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "'": "&#39;",
+    '"': "&quot;",
+  }[character] || character));
+}
+
 async function getMpesaAccessToken() {
   const credentials = Buffer.from(`${process.env.MPESA_CONSUMER_KEY}:${process.env.MPESA_CONSUMER_SECRET}`).toString("base64");
   const response = await fetch(`${process.env.MPESA_BASE_URL || "https://sandbox.safaricom.co.ke"}/oauth/v1/generate?grant_type=client_credentials`, {
@@ -34,6 +44,46 @@ async function startServer() {
   // API Health Check
   app.get("/api/health", (req, res) => {
     res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  app.post("/api/invitations", async (req, res) => {
+    const { recipientEmail, inviterName, agreementTitle, inviteLink, currency, amount } = req.body as {
+      recipientEmail?: string;
+      inviterName?: string;
+      agreementTitle?: string;
+      inviteLink?: string;
+      currency?: string;
+      amount?: number;
+    };
+    const email = String(recipientEmail || "").trim().toLowerCase();
+    if (!/^\S+@\S+\.\S+$/.test(email) || !inviteLink || !agreementTitle || !currency || !Number.isFinite(Number(amount))) {
+      return res.status(400).json({ success: false, error: "A valid recipient, agreement, amount, currency, and invite link are required." });
+    }
+    if (!process.env.RESEND_API_KEY || !process.env.RESEND_FROM_EMAIL) {
+      return res.status(503).json({ success: false, error: "Email service is not configured. Set RESEND_API_KEY and RESEND_FROM_EMAIL on the server." });
+    }
+
+    try {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: process.env.RESEND_FROM_EMAIL,
+          to: [email],
+          subject: `Invitation to join ${agreementTitle}`,
+          html: `<p>${escapeHtml(inviterName || "Someone")} invited you to join a Poly-Crow escrow agreement.</p><p><strong>${escapeHtml(agreementTitle)}</strong><br />Stake: ${escapeHtml(String(amount))} ${escapeHtml(currency)}</p><p><a href="${escapeHtml(inviteLink)}">Review and join the agreement</a></p>`,
+        }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) return res.status(502).json({ success: false, error: result.message || "Email provider rejected the invitation." });
+      return res.json({ success: true, id: result.id });
+    } catch (error) {
+      console.error("Invitation email error:", error);
+      return res.status(502).json({ success: false, error: "Email service is unavailable." });
+    }
   });
 
   app.post("/api/mpesa/stkpush", async (req, res) => {
