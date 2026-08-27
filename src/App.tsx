@@ -174,7 +174,7 @@ export default function App() {
 
   // Authentication Guard (Simplified)
   if (loading) return (
-    <div className="flex items-center justify-center h-screen bg-[#05070a]">
+    <div className="flex items-center justify-center h-screen bg-white">
       <motion.div 
         animate={{ scale: [1, 1.2, 1], rotate: 360 }} 
         transition={{ repeat: Infinity, duration: 2 }}
@@ -248,7 +248,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex text-inherit">
+    <div className="app-shell min-h-screen flex bg-[#f7faf8] text-[#182d50]">
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div 
@@ -268,7 +268,7 @@ export default function App() {
             animate={{ x: 0 }}
             exit={{ x: -300 }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="mobile-sidebar fixed lg:relative z-50 w-[min(84vw,20rem)] h-screen p-5 lg:p-6 flex flex-col gap-7 bg-[#f8fafc]/95 dark:bg-[#081016]/95 lg:bg-transparent backdrop-blur-3xl border-r border-black/5 dark:border-white/10 shadow-[18px_0_50px_rgba(2,6,23,0.22)] lg:shadow-none"
+            className="mobile-sidebar fixed lg:relative z-50 w-[min(84vw,20rem)] h-screen p-5 lg:p-6 flex flex-col gap-7 bg-white/95 dark:bg-[#081016]/95 lg:bg-transparent backdrop-blur-3xl border-r border-[#e1e8e5] dark:border-white/10 shadow-[18px_0_50px_rgba(2,6,23,0.12)] lg:shadow-none"
           >
             <div className="flex items-center justify-between px-1">
               <div className="flex items-center gap-3">
@@ -379,7 +379,7 @@ export default function App() {
           </section>
         ) : (
           <>
-            <header className="min-h-20 py-3 border-b border-black/5 dark:border-white/5 px-4 sm:px-8 flex items-center justify-between gap-3 backdrop-blur-md sticky top-0 z-40 bg-white/50 dark:bg-[#05070a]/50">
+            <header className="min-h-20 py-3 border-b border-[#e1e8e5] dark:border-white/5 px-4 sm:px-8 flex items-center justify-between gap-3 backdrop-blur-md sticky top-0 z-40 bg-white/80 dark:bg-[#05070a]/50">
               <div className="flex items-center gap-4">
                 <button 
                   onClick={() => setIsSidebarOpen(!isSidebarOpen)}

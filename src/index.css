@@ -19,7 +19,7 @@
   }
 
   body {
-    @apply bg-[#05070a] text-slate-200 antialiased overflow-x-hidden transition-all duration-500;
+    @apply bg-white text-slate-700 antialiased overflow-x-hidden transition-all duration-500;
     min-height: 100vh;
   }
 
@@ -69,7 +69,7 @@
   }
 
   body.light .liquid-glass {
-    @apply bg-white/70 border-black/5 shadow-xl;
+    @apply bg-white border-[#e1e8e5] shadow-[0_8px_28px_rgba(24,45,80,0.07)];
   }
 
   .liquid-glass-dark {
@@ -82,7 +82,7 @@
   }
 
   .glass-hover {
-    @apply hover:bg-white/12 hover:border-emerald-300/30 hover:scale-[1.015] transition-all duration-500;
+    @apply hover:bg-white hover:border-emerald-300/50 hover:scale-[1.01] transition-all duration-500;
     transform-origin: center;
   }
 
@@ -95,7 +95,7 @@
   }
 
   .emerald-button {
-    @apply bg-emerald-500 hover:bg-emerald-400 text-black font-bold transition-all duration-500 shadow-[0_10px_20px_rgba(16,185,129,0.2)];
+    @apply bg-emerald-500 hover:bg-emerald-400 text-white font-bold transition-all duration-500 shadow-[0_10px_20px_rgba(16,185,129,0.2)];
   }
 
   .poly-button {
@@ -121,7 +121,7 @@
   }
 
   .poly-button-primary {
-    @apply relative inline-flex items-center justify-center overflow-hidden border font-bold transition-all duration-500 active:scale-95 bg-emerald-500 text-white border-emerald-300/30 hover:bg-emerald-400 shadow-[0_0_32px_rgba(16,185,129,0.28)];
+    @apply relative inline-flex items-center justify-center overflow-hidden border font-bold transition-all duration-500 active:scale-95 bg-emerald-500 text-white border-emerald-300/30 hover:bg-emerald-400 shadow-[0_8px_20px_rgba(16,185,129,0.18)];
     border-radius: 10px;
   }
 
@@ -231,6 +231,24 @@
     @apply bg-white/10 rounded-full;
   }
 }
+
+@layer components {
+  .landing-page { font-family: "Outfit", sans-serif; }
+  .landing-page h1, .landing-page h2, .landing-page h3 { font-family: "Space Grotesk", sans-serif; }
+  .landing-nav { position: relative; }
+  .landing-pill { @apply inline-flex items-center justify-center gap-2 rounded-full bg-[#14a94b] font-bold text-white transition hover:bg-[#0c8d3c]; }
+  .landing-pill-small { @apply px-4 py-2 text-[10px]; }
+  .landing-outline { @apply inline-flex items-center justify-center gap-2 rounded-full border border-[#b9c8c1] bg-white font-bold text-[#182d50] transition hover:border-[#14a94b] hover:text-[#14a94b]; }
+  .landing-form-card { @apply rounded-xl border border-[#d9e5dd] bg-white shadow-[0_10px_35px_rgba(24,45,80,0.14)]; }
+  .landing-page #benefits h2 span { font-size: 0; }
+  .landing-page #benefits h2 span::after { content: "POLY-CROW"; font-size: 2.25rem; }
+  .landing-page footer strong { font-size: 0; }
+  .landing-page footer strong::after { content: "POLY-CROW"; font-size: 1rem; }
+}
+
+body.light [class~="text-white/40"], body.light [class~="text-white/60"] { color: #718097; }
+body.light [class~="bg-white/5"] { background-color: rgba(24, 45, 80, 0.035); }
+body.light [class~="border-white/5"], body.light [class~="border-white/10"] { border-color: #e1e8e5; }
 
 @layer utilities {
   .wallet-toolbar-action {
