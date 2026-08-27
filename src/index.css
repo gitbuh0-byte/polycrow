@@ -241,10 +241,28 @@
   .landing-outline { @apply inline-flex items-center justify-center gap-2 rounded-full border border-[#b9c8c1] bg-white font-bold text-[#182d50] transition hover:border-[#14a94b] hover:text-[#14a94b]; }
   .landing-form-card { @apply rounded-xl border border-[#d9e5dd] bg-white shadow-[0_10px_35px_rgba(24,45,80,0.14)]; }
   .landing-page #benefits h2 span { font-size: 0; }
-  .landing-page #benefits h2 span::after { content: "POLY-CROW"; font-size: 2.25rem; }
+  .landing-page #benefits h2 span::after { content: "POLYCROW"; font-size: 2.25rem; }
   .landing-page footer strong { font-size: 0; }
-  .landing-page footer strong::after { content: "POLY-CROW"; font-size: 1rem; }
+  .landing-page footer strong::after { content: "POLYCROW"; font-size: 1rem; }
 }
+
+.dark .landing-page .landing-outline { background: #101b2b; border-color: #34445a; color: #f8fafc; }
+.dark .landing-page .landing-form-card,
+.dark .landing-page .bg-white { background-color: #0c1725; border-color: #26384d; }
+.dark .landing-page .landing-form-card input,
+.dark .landing-page .landing-form-card span,
+.dark .landing-page .landing-form-card div { color: #cbd5e1; }
+.dark .landing-page .landing-form-card input { background-color: #101f30; }
+.dark .landing-page .landing-form-card input::placeholder { color: #8493a8; }
+.dark .landing-page [class~="bg-[#f4f7f6]"] { background-color: #08121f; }
+.dark .landing-page [class~="text-[#182d50]"] { color: #f8fafc; }
+.dark .landing-page [class~="text-[#718097]"],
+.dark .landing-page [class~="text-[#8490a0]"],
+.dark .landing-page [class~="text-[#8090a6]"] { color: #9aa9bb; }
+.dark .landing-page [class~="border-[#dce8df]"],
+.dark .landing-page [class~="border-[#dce5e1]"],
+.dark .landing-page [class~="border-[#e1e8e5]"],
+.dark .landing-page [class~="divide-[#dbe3e1]"] { border-color: #26384d; }
 
 body.light [class~="text-white/40"], body.light [class~="text-white/60"] { color: #718097; }
 body.light [class~="bg-white/5"] { background-color: rgba(24, 45, 80, 0.035); }
