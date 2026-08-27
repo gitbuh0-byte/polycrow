@@ -16,7 +16,13 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    scrollbar-width: none;
   }
+
+  html::-webkit-scrollbar,
+  body::-webkit-scrollbar,
+  .app-shell::-webkit-scrollbar,
+  main::-webkit-scrollbar { display: none; }
 
   body {
     @apply bg-white text-slate-700 antialiased overflow-x-hidden transition-all duration-500;
@@ -97,7 +103,7 @@
 
   .poly-button {
     @apply relative inline-flex items-center justify-center overflow-hidden border font-bold transition-all duration-500 active:scale-95;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .poly-button::before {
@@ -105,17 +111,17 @@
   }
 
   .poly-button:hover {
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .poly-button-primary {
     @apply relative inline-flex items-center justify-center overflow-hidden border font-bold transition-all duration-500 active:scale-95 bg-emerald-500 text-white border-emerald-300/30 hover:bg-emerald-400 shadow-[0_8px_20px_rgba(16,185,129,0.18)];
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .poly-button-secondary {
     @apply relative inline-flex items-center justify-center overflow-hidden border font-bold transition-all duration-500 active:scale-95 bg-white/80 dark:bg-white/[0.07] text-slate-900 dark:text-white border-black/10 dark:border-white/10 hover:bg-white dark:hover:bg-white/12;
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .poly-button-primary::before,
@@ -125,7 +131,7 @@
 
   .poly-button-primary:hover,
   .poly-button-secondary:hover {
-    border-radius: 10px;
+    border-radius: 8px;
   }
 
   .poly-button-text {
@@ -135,12 +141,12 @@
 
   .poly-soft-button {
     @apply border border-black/5 dark:border-white/10 bg-black/5 dark:bg-white/5;
-    border-radius: 10px;
+    border-radius: 8px;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
   }
 
   .poly-soft-button:hover {
-    border-radius: 10px;
+    border-radius: 8px;
     box-shadow:
       inset 0 1px 0 rgba(255, 255, 255, 0.12),
       0 14px 34px rgba(16, 185, 129, 0.10);
@@ -210,9 +216,9 @@
   .landing-page { font-family: "Outfit", sans-serif; }
   .landing-page h1, .landing-page h2, .landing-page h3 { font-family: "Space Grotesk", sans-serif; }
   .landing-nav { position: relative; }
-  .landing-pill { @apply inline-flex items-center justify-center gap-2 rounded-full bg-[#14a94b] font-bold text-white transition hover:bg-[#0c8d3c]; }
+  .landing-pill { @apply inline-flex items-center justify-center gap-2 rounded-lg bg-[#14a94b] font-bold text-white transition hover:bg-[#0c8d3c]; }
   .landing-pill-small { @apply px-4 py-2 text-[10px]; }
-  .landing-outline { @apply inline-flex items-center justify-center gap-2 rounded-full border border-[#b9c8c1] bg-white font-bold text-[#182d50] transition hover:border-[#14a94b] hover:text-[#14a94b]; }
+  .landing-outline { @apply inline-flex items-center justify-center gap-2 rounded-lg border border-[#b9c8c1] bg-white font-bold text-[#182d50] transition hover:border-[#14a94b] hover:text-[#14a94b]; }
   .landing-form-card { @apply rounded-xl border border-[#d9e5dd] bg-white shadow-[0_10px_35px_rgba(24,45,80,0.14)]; }
   .landing-page .landing-form-card { display: none; }
   .landing-page .hero-art {
@@ -226,6 +232,13 @@
   .landing-page #benefits h2 span::after { content: "POLYCROW"; font-size: 2.25rem; }
   .landing-page footer strong { font-size: 0; }
   .landing-page footer strong::after { content: "POLYCROW"; font-size: 1rem; }
+  .landing-page button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(20, 169, 75, 0.2); }
+  .landing-page .scroll-reveal { opacity: 1; transform: translateY(0); transition: opacity 600ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .landing-page .scroll-reveal:not(.scroll-visible) { transform: translateY(10px); }
+  .landing-page .scroll-reveal.scroll-visible { opacity: 1; transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce) {
+    .landing-page .scroll-reveal { opacity: 1; transform: none; transition: none; }
+  }
 }
 
 .dark .landing-page .landing-outline { background: #101b2b; border-color: #34445a; color: #f8fafc; }
