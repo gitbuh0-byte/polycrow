@@ -20,7 +20,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const loadingTimeout = window.setTimeout(() => {
       setLoading(false);
       console.error("Firebase authentication timed out. Check Vercel Firebase environment variables and authorized domains.");
-    }, 8000);
+    }, 2500);
 
     if (!firebaseAvailable) {
       setUser(null);

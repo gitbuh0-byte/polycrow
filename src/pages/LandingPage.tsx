@@ -20,9 +20,46 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
   const [openFaq, setOpenFaq] = React.useState<number | null>(null);
   const goTo = (id: string) => { setMenuOpen(false); document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); };
 
+  React.useEffect(() => {
+    const card = document.querySelector<HTMLElement>(".landing-form-card");
+    if (!card) return;
+    const textBlocks = Array.from(card.querySelectorAll<HTMLElement>("*"));
+    textBlocks.find((element) => element.textContent?.trim() === "I'm Selling")?.replaceChildren("Create Agreement");
+    textBlocks.find((element) => element.textContent?.trim().startsWith("Select Category"))?.replaceChildren("Select Currency");
+    textBlocks.find((element) => element.textContent?.trim() === "For")?.replaceChildren("Stake");
+    const inputs = card.querySelectorAll<HTMLInputElement>("input");
+    if (inputs[0]) inputs[0].placeholder = "What are you exchanging or agreeing to?";
+    if (inputs[1]) inputs[1].placeholder = "Enter stake amount";
+    const action = card.querySelector("button");
+    if (action) action.replaceChildren("Start Agreement");
+
+    document.querySelector<HTMLElement>(".landing-form-card")?.remove();
+    const heroArtwork = document.querySelector<HTMLImageElement>('img[alt="People completing a trusted business deal"]');
+    if (heroArtwork) {
+      heroArtwork.src = "/phone.png";
+      heroArtwork.alt = "Poly-Crow wallet and agreement screens";
+      heroArtwork.className = "hero-art absolute inset-0 h-full w-full rounded-[28px] object-contain opacity-90";
+      heroArtwork.parentElement?.querySelector<HTMLElement>(":scope > div.absolute")?.remove();
+    }
+    const revealTargets = document.querySelectorAll<HTMLElement>(".landing-page main > section, .landing-page main > div, .landing-page footer");
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => entry.target.classList.toggle("scroll-visible", entry.isIntersecting));
+    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
+
+    revealTargets.forEach((target) => {
+      target.classList.add("scroll-reveal");
+      if (target.getBoundingClientRect().top < window.innerHeight) {
+        target.classList.add("scroll-visible");
+      }
+      observer.observe(target);
+    });
+
+    return () => observer.disconnect();
+  }, [theme]);
+
   return <div className="landing-page min-h-screen overflow-x-hidden bg-white text-[#182d50] dark:bg-[#05070a] dark:text-slate-100">
     <header className="landing-nav mx-auto flex max-w-[1180px] items-center justify-between px-5 py-5 sm:px-8">
-      <button className="flex items-center gap-2" onClick={() => goTo("top")} aria-label="POLYCROW home"><img src="/logo.png" alt="POLYCROW" className="h-9 w-9 object-contain" /><span className="text-[15px] font-extrabold tracking-[-0.04em]">POLY<span className="text-[#14a94b]">CROW</span></span></button>
+      <button className="flex items-center gap-2" onClick={() => goTo("top")} aria-label="POLYCROW home"><img src="/ill.png" alt="POLYCROW" className="h-9 w-9 object-contain" /><span className="text-[15px] font-extrabold tracking-[-0.04em]">POLY<span className="text-[#14a94b]">CROW</span></span></button>
       <nav className="hidden items-center gap-8 text-[11px] font-semibold md:flex"><button onClick={() => goTo("top")} className="text-[#14a94b]">Home</button><button onClick={() => goTo("benefits")} className="hover:text-[#14a94b]">About</button><button onClick={() => goTo("blogs")} className="hover:text-[#14a94b]">Blogs</button><button onClick={() => goTo("footer")} className="hover:text-[#14a94b]">Contact</button></nav>
       <div className="flex items-center gap-2"><button onClick={toggleTheme} className="text-[10px] font-bold text-[#63718a] dark:text-slate-300" aria-label="Toggle theme">{theme === "dark" ? "LIGHT" : "DARK"}</button><button onClick={onLogin} className="landing-pill landing-pill-small">Account <ArrowRight size={12} /></button><button onClick={() => setMenuOpen(!menuOpen)} className="p-2 md:hidden" aria-label="Toggle menu">{menuOpen ? <X size={20} /> : <Menu size={20} />}</button></div>
       {menuOpen && <div className="absolute left-5 right-5 top-16 z-30 flex flex-col gap-0 border border-[#dce8df] bg-white p-3 shadow-lg md:hidden">{[["top", "Home"], ["benefits", "About"], ["blogs", "Blogs"], ["footer", "Contact"]].map(([id, label]) => <button key={id} onClick={() => goTo(id)} className="py-1.5 text-left text-sm font-semibold">{label}</button>)}<button onClick={onLogin} className="landing-pill mt-2 py-2 text-sm">Open account</button></div>}
@@ -40,7 +77,7 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
 
       <section id="security" className="mx-auto grid max-w-[1050px] items-center gap-10 px-5 py-20 sm:px-8 lg:grid-cols-2"><div className="overflow-hidden rounded-3xl bg-[#e7f9ee] p-4"><img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?auto=format&fit=crop&w=850&q=80" alt="Secure digital payment technology" className="h-64 w-full rounded-2xl object-cover" /></div><div><h2 className="text-3xl font-display font-semibold tracking-[-0.05em]">ADVANCED <span className="text-[#14a94b]">SECURITY FEATURES</span></h2><p className="mt-2 text-xs text-[#718097]">Protecting your transactions with cutting-edge technology.</p><div className="mt-6 space-y-4">{[["End-to-End Encryption", LockKeyhole], ["Two-Factor Authentication", ShieldCheck], ["Fraud Detection", Sparkles]].map(([label, Icon]) => <div key={label as string} className="flex gap-3"><Icon size={17} className="text-[#14a94b]" /><div><strong className="text-xs">{label as string}</strong><p className="mt-1 text-[10px] text-[#8490a0]">Advanced protection keeps every transaction safe.</p></div></div>)}</div><button onClick={onLogin} className="landing-pill mt-6 px-5 py-2 text-[10px]">Let's get started <ArrowRight size={13} /></button></div></section>
 
-      <section id="blogs" className="mx-auto max-w-[1180px] px-5 py-16 sm:px-8"><div className="mb-8 flex items-center justify-between"><h2 className="text-3xl font-display font-semibold">OUR <span className="text-[#14a94b]">BLOGS</span></h2><button className="landing-outline px-3 py-1 text-[9px]">View All <ArrowRight size={12} /></button></div><div className="grid gap-4 md:grid-cols-3">{["https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80", "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=600&q=80", "https://images.unsplash.com/photo-1551836022-3b4c1c4c8e56?auto=format&fit=crop&w=600&q=80"].map((image, index) => <article key={image} className="border border-[#e1e8e5] p-2"><img src={image} alt="" className="h-32 w-full object-cover" /><p className="mt-3 text-[9px] font-bold text-[#14a94b]">0{index + 6} JULY 2025</p><h3 className="mt-2 text-sm font-bold">{["What if there is a disagreement?", "Payment Procession: Mass...", "What is an Escrow Agreement?"][index]}</h3><p className="mt-2 text-[10px] leading-4 text-[#8490a0]">Learn more about safe and seamless escrow transactions.</p></article>)}</div></section>
+      <section id="blogs" className="mx-auto max-w-[1180px] px-5 py-16 sm:px-8"><div className="mb-8 flex items-center justify-between"><h2 className="text-3xl font-display font-semibold">OUR <span className="text-[#14a94b]">BLOGS</span></h2><button className="landing-outline px-3 py-1 text-[9px]">View All <ArrowRight size={12} /></button></div><div className="grid gap-4 md:grid-cols-3">{["https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&w=600&q=80", "https://images.unsplash.com/photo-1556761175-4b46a572b786?auto=format&fit=crop&w=600&q=80", "https://images.unsplash.com/photo-1521791055366-0d553872125f?auto=format&fit=crop&w=600&q=80"].map((image, index) => <article key={image} className="border border-[#e1e8e5] p-2"><img src={image} alt="" className="h-32 w-full object-cover" /><p className="mt-3 text-[9px] font-bold text-[#14a94b]">0{index + 6} JULY 2025</p><h3 className="mt-2 text-sm font-bold">{["What if there is a disagreement?", "Payment Procession: Mass...", "What is an Escrow Agreement?"][index]}</h3><p className="mt-2 text-[10px] leading-4 text-[#8490a0]">Learn more about safe and seamless escrow transactions.</p></article>)}</div></section>
 
       <section className="mx-auto grid max-w-[1050px] gap-8 px-5 py-12 sm:px-8 lg:grid-cols-[0.55fr_1fr]"><div><h2 className="text-3xl font-display font-semibold text-[#14a94b]">FAQS</h2><p className="mt-2 text-xs text-[#718097]">Get quick answers to our most commonly asked questions.</p><button onClick={onLogin} className="landing-pill mt-5 px-5 py-2 text-[10px]">Contact <ArrowRight size={13} /></button></div><div className="border-t border-[#dce5e1]">{faqs.map((faq, index) => <div key={faq} className="border-b border-[#dce5e1]"><button onClick={() => setOpenFaq(openFaq === index ? null : index)} className="flex w-full items-center justify-between py-4 text-left text-[10px] font-bold">{faq}<ChevronDown size={14} className={openFaq === index ? "rotate-180 text-[#14a94b]" : ""} /></button>{openFaq === index && <p className="pb-4 text-[10px] leading-5 text-[#8490a0]">EscrowLab protects both parties by holding funds securely until the agreed conditions are met.</p>}</div>)}</div></section>
     </main>

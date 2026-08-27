@@ -245,8 +245,7 @@
   .landing-page footer strong { font-size: 0; }
   .landing-page footer strong::after { content: "POLYCROW"; font-size: 1rem; }
   .landing-page button:not(:disabled):hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(20, 169, 75, 0.2); }
-  .landing-page .scroll-reveal { opacity: 1; transform: translateY(0); transition: opacity 600ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1); }
-  .landing-page .scroll-reveal:not(.scroll-visible) { transform: translateY(10px); }
+  .landing-page .scroll-reveal { opacity: 0; transform: translateY(28px); transition: opacity 600ms ease, transform 700ms cubic-bezier(0.22, 1, 0.36, 1); }
   .landing-page .scroll-reveal.scroll-visible { opacity: 1; transform: translateY(0); }
   @media (prefers-reduced-motion: reduce) {
     .landing-page .scroll-reveal { opacity: 1; transform: none; transition: none; }
