@@ -173,7 +173,7 @@ export default function App() {
   }, [theme]);
 
   // Authentication Guard (Simplified)
-  if (loading) return (
+  if (loading && auth.currentUser) return (
     <div className="flex items-center justify-center h-screen bg-white">
       <motion.div 
         animate={{ scale: [1, 1.2, 1], rotate: 360 }} 

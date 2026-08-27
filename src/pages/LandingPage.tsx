@@ -21,19 +21,6 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
   const goTo = (id: string) => { setMenuOpen(false); document.getElementById(id)?.scrollIntoView({ behavior: "smooth" }); };
 
   React.useEffect(() => {
-    const card = document.querySelector<HTMLElement>(".landing-form-card");
-    if (!card) return;
-    const textBlocks = Array.from(card.querySelectorAll<HTMLElement>("*"));
-    textBlocks.find((element) => element.textContent?.trim() === "I'm Selling")?.replaceChildren("Create Agreement");
-    textBlocks.find((element) => element.textContent?.trim().startsWith("Select Category"))?.replaceChildren("Select Currency");
-    textBlocks.find((element) => element.textContent?.trim() === "For")?.replaceChildren("Stake");
-    const inputs = card.querySelectorAll<HTMLInputElement>("input");
-    if (inputs[0]) inputs[0].placeholder = "What are you exchanging or agreeing to?";
-    if (inputs[1]) inputs[1].placeholder = "Enter stake amount";
-    const action = card.querySelector("button");
-    if (action) action.replaceChildren("Start Agreement");
-
-    document.querySelector<HTMLElement>(".landing-form-card")?.remove();
     const heroArtwork = document.querySelector<HTMLImageElement>('img[alt="People completing a trusted business deal"]');
     if (heroArtwork) {
       heroArtwork.src = "/phone.png";
