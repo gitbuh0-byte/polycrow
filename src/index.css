@@ -17,7 +17,10 @@
   html {
     scroll-behavior: smooth;
     scrollbar-width: none;
+    background: #05070a;
   }
+
+  html.light { background: #f8fafc; }
 
   html::-webkit-scrollbar,
   body::-webkit-scrollbar,
