@@ -31,6 +31,11 @@
       radial-gradient(at 100% 0%, hsla(160,100%,98%,1) 0, transparent 50%);
   }
 
+  body.dark {
+    @apply bg-[#05070a] text-slate-200;
+    background-image: none;
+  }
+
   button {
     position: relative;
     isolation: isolate;
@@ -60,34 +65,26 @@
 
 @layer components {
   .liquid-glass {
-    @apply backdrop-blur-2xl border transition-all duration-500;
-    @apply bg-white/[0.07] border-white/10 shadow-2xl;
+    @apply border transition-colors duration-200;
+    @apply bg-white border-[#e1e8e5] shadow-[0_4px_14px_rgba(24,45,80,0.06)];
     border-radius: 10px;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.12),
-      0 24px 70px rgba(2, 6, 23, 0.22);
   }
 
-  body.light .liquid-glass {
-    @apply bg-white border-[#e1e8e5] shadow-[0_8px_28px_rgba(24,45,80,0.07)];
+  body.dark .liquid-glass {
+    @apply bg-[#0c1725] border-[#26384d] shadow-[0_4px_14px_rgba(0,0,0,0.18)];
   }
 
   .liquid-glass-dark {
-    @apply backdrop-blur-2xl border bg-black/25 border-white/10 shadow-2xl;
+    @apply border bg-[#08121f] border-[#26384d] shadow-[0_4px_14px_rgba(0,0,0,0.18)];
     border-radius: 10px;
   }
 
   body.light .liquid-glass-dark {
-    @apply bg-black/5 border-black/5 shadow-xl;
+    @apply bg-[#f4f7f6] border-[#e1e8e5] shadow-[0_4px_14px_rgba(24,45,80,0.06)];
   }
 
   .glass-hover {
-    @apply hover:bg-white hover:border-emerald-300/50 hover:scale-[1.01] transition-all duration-500;
-    transform-origin: center;
-  }
-
-  body.light .glass-hover {
-    @apply hover:bg-white/80 hover:border-black/10;
+    @apply transition-colors duration-200;
   }
 
   .neon-emerald {
@@ -104,20 +101,11 @@
   }
 
   .poly-button::before {
-    content: "";
-    position: absolute;
-    inset: -45% -20%;
-    transform: translateX(-120%) rotate(12deg);
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.34), transparent);
-    transition: transform 700ms ease;
+    display: none;
   }
 
   .poly-button:hover {
     border-radius: 10px;
-  }
-
-  .poly-button:hover::before {
-    transform: translateX(120%) rotate(12deg);
   }
 
   .poly-button-primary {
@@ -132,22 +120,12 @@
 
   .poly-button-primary::before,
   .poly-button-secondary::before {
-    content: "";
-    position: absolute;
-    inset: -45% -20%;
-    transform: translateX(-120%) rotate(12deg);
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.34), transparent);
-    transition: transform 700ms ease;
+    display: none;
   }
 
   .poly-button-primary:hover,
   .poly-button-secondary:hover {
     border-radius: 10px;
-  }
-
-  .poly-button-primary:hover::before,
-  .poly-button-secondary:hover::before {
-    transform: translateX(120%) rotate(12deg);
   }
 
   .poly-button-text {
@@ -217,10 +195,6 @@
       box-shadow 700ms ease;
   }
 
-  .morph-glass:hover {
-    border-radius: 10px;
-  }
-
   .custom-scrollbar::-webkit-scrollbar {
     @apply w-1.5;
   }
@@ -240,6 +214,14 @@
   .landing-pill-small { @apply px-4 py-2 text-[10px]; }
   .landing-outline { @apply inline-flex items-center justify-center gap-2 rounded-full border border-[#b9c8c1] bg-white font-bold text-[#182d50] transition hover:border-[#14a94b] hover:text-[#14a94b]; }
   .landing-form-card { @apply rounded-xl border border-[#d9e5dd] bg-white shadow-[0_10px_35px_rgba(24,45,80,0.14)]; }
+  .landing-page .landing-form-card { display: none; }
+  .landing-page .hero-art {
+    transform: scale(1.2);
+    transform-origin: center;
+    pointer-events: none;
+  }
+  .landing-page main#top > section:first-child > div:first-child > p:first-child { display: none; }
+  .landing-page article > img { display: block; width: 100%; height: 8rem; object-fit: cover; }
   .landing-page #benefits h2 span { font-size: 0; }
   .landing-page #benefits h2 span::after { content: "POLYCROW"; font-size: 2.25rem; }
   .landing-page footer strong { font-size: 0; }
@@ -247,7 +229,6 @@
 }
 
 .dark .landing-page .landing-outline { background: #101b2b; border-color: #34445a; color: #f8fafc; }
-.dark .landing-page .landing-form-card,
 .dark .landing-page .bg-white { background-color: #0c1725; border-color: #26384d; }
 .dark .landing-page .landing-form-card input,
 .dark .landing-page .landing-form-card span,
@@ -263,10 +244,28 @@
 .dark .landing-page [class~="border-[#dce5e1]"],
 .dark .landing-page [class~="border-[#e1e8e5]"],
 .dark .landing-page [class~="divide-[#dbe3e1]"] { border-color: #26384d; }
+.dark .landing-page .landing-form-card { background: transparent; border-color: transparent; box-shadow: none; }
 
 body.light [class~="text-white/40"], body.light [class~="text-white/60"] { color: #718097; }
 body.light [class~="bg-white/5"] { background-color: rgba(24, 45, 80, 0.035); }
 body.light [class~="border-white/5"], body.light [class~="border-white/10"] { border-color: #e1e8e5; }
+.dark .app-shell { background-color: #05070a; color: #f8fafc; }
+.app-shell [class*="backdrop-blur"] { backdrop-filter: none; }
+body.light [class~="hover:bg-white"] { background-color: #f0faf3; }
+body.dark [class~="hover:bg-white"], body.dark [class~="dark:hover:bg-white"] { background-color: #102b24; }
+:where(div, section, article, aside, li, tr, label)[class*="hover:bg-"]:hover { background-color: inherit !important; }
+:where(div, section, article, aside, li, tr, label)[class*="hover:border-"]:hover { border-color: inherit !important; }
+:where(div, section, article, aside, li, tr, label)[class*="hover:scale-"]:hover { transform: none !important; }
+:where(div, section, article, aside, li, tr, label)[class*="hover:shadow-"]:hover { box-shadow: inherit !important; }
+
+@media (max-width: 640px) {
+  .landing-page .hero-art { transform: scale(0.95); }
+  .landing-page article > img { height: 10rem; }
+}
+
+@media (min-width: 641px) {
+  .landing-page .hero-art { transform: scale(1.65); }
+}
 
 @layer utilities {
   .wallet-toolbar-action {
