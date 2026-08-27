@@ -30,6 +30,12 @@
   .app-shell,
   .custom-scrollbar { scrollbar-width: none; }
 
+  .app-shell > main {
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
   body {
     @apply bg-white text-slate-700 antialiased overflow-x-hidden transition-all duration-500;
     min-height: 100vh;
