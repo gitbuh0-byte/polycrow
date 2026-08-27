@@ -41,20 +41,6 @@ export default function LandingPage({ onLogin, onAdminPortalClick }: LandingPage
       heroArtwork.className = "hero-art absolute inset-0 h-full w-full rounded-[28px] object-contain opacity-90";
       heroArtwork.parentElement?.querySelector<HTMLElement>(":scope > div.absolute")?.remove();
     }
-    const revealTargets = document.querySelectorAll<HTMLElement>(".landing-page main > section, .landing-page main > div, .landing-page footer");
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => entry.target.classList.toggle("scroll-visible", entry.isIntersecting));
-    }, { threshold: 0.12, rootMargin: "0px 0px -8% 0px" });
-
-    revealTargets.forEach((target) => {
-      target.classList.add("scroll-reveal");
-      if (target.getBoundingClientRect().top < window.innerHeight) {
-        target.classList.add("scroll-visible");
-      }
-      observer.observe(target);
-    });
-
-    return () => observer.disconnect();
   }, [theme]);
 
   return <div className="landing-page min-h-screen overflow-x-hidden bg-white text-[#182d50] dark:bg-[#05070a] dark:text-slate-100">

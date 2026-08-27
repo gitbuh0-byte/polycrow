@@ -248,7 +248,7 @@ export default function App() {
   };
 
   return (
-    <div className="app-shell min-h-screen flex bg-[#f7faf8] text-[#182d50]">
+    <div className="app-shell min-h-screen flex bg-[#f7faf8] text-[#182d50] dark:bg-[#05070a] dark:text-white">
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div 
