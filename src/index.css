@@ -22,7 +22,13 @@
   html::-webkit-scrollbar,
   body::-webkit-scrollbar,
   .app-shell::-webkit-scrollbar,
-  main::-webkit-scrollbar { display: none; }
+  main::-webkit-scrollbar,
+  *::-webkit-scrollbar { width: 0; height: 0; display: none; }
+
+  body,
+  main,
+  .app-shell,
+  .custom-scrollbar { scrollbar-width: none; }
 
   body {
     @apply bg-white text-slate-700 antialiased overflow-x-hidden transition-all duration-500;
